@@ -1,0 +1,58 @@
+<mesh>
+	<submeshes>
+		<submesh material="arrowRMat/TWOSIDE" usesharedvertices="false">
+			<faces count="6">
+				<face v1="0" v2="1" v3="3"/>
+				<face v1="1" v2="2" v3="3"/>
+				<face v1="3" v2="4" v3="0"/>
+				<face v1="4" v2="5" v3="0"/>
+				<face v1="4" v2="6" v3="5"/>
+				<face v1="6" v2="7" v3="5"/>
+			</faces>
+			<geometry vertexcount="8">
+				<vertexbuffer positions="true" normals="true" texture_coords="1">
+					<vertex>
+						<position x="0.593725" y="-0.189481" z="0.000000"/>
+						<normal x="0.000000" y="-0.000000" z="-1.000000"/>
+						<texcoord u="0.066499" v="0.057241"/>
+					</vertex>
+					<vertex>
+						<position x="0.593725" y="-0.627020" z="0.000000"/>
+						<normal x="0.000000" y="-0.000000" z="-1.000000"/>
+						<texcoord u="0.066499" v="0.065929"/>
+					</vertex>
+					<vertex>
+						<position x="-0.593725" y="-0.627020" z="0.000000"/>
+						<normal x="0.000000" y="-0.000000" z="-1.000000"/>
+						<texcoord u="0.077689" v="0.065929"/>
+					</vertex>
+					<vertex>
+						<position x="-0.593725" y="-0.189481" z="0.000000"/>
+						<normal x="0.000000" y="-0.000000" z="-1.000000"/>
+						<texcoord u="0.077689" v="0.057241"/>
+					</vertex>
+					<vertex>
+						<position x="-0.407856" y="0.248059" z="0.000000"/>
+						<normal x="0.000000" y="0.000000" z="-1.000000"/>
+						<texcoord u="0.075938" v="0.048554"/>
+					</vertex>
+					<vertex>
+						<position x="0.407856" y="0.248059" z="0.000000"/>
+						<normal x="0.000000" y="0.000000" z="-1.000000"/>
+						<texcoord u="0.068251" v="0.048554"/>
+					</vertex>
+					<vertex>
+						<position x="-0.087943" y="0.627021" z="0.000000"/>
+						<normal x="0.000000" y="0.000000" z="-1.000000"/>
+						<texcoord u="0.072923" v="0.039866"/>
+					</vertex>
+					<vertex>
+						<position x="0.087943" y="0.627021" z="0.000000"/>
+						<normal x="0.000000" y="0.000000" z="-1.000000"/>
+						<texcoord u="0.071266" v="0.039866"/>
+					</vertex>
+				</vertexbuffer>
+			</geometry>
+		</submesh>
+	</submeshes>
+</mesh>

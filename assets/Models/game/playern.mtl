@@ -1,0 +1,24 @@
+# Blender3D MTL File: playern.blend
+# Material Count: 2
+newmtl playerMat_moko.png
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.100000 0.100000 0.100000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd moko.png
+
+
+newmtl playerMat
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.100000 0.100000 0.100000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd moko.png
+
+

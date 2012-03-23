@@ -1,0 +1,14 @@
+material enemyMat/SOLID/TEX/hada01.png
+{
+	technique
+	{
+		pass
+		{
+			specular 0.000000 0.000000 0.000000 12.500000
+			texture_unit
+			{
+				texture hada01.png
+			}
+		}
+	}
+}

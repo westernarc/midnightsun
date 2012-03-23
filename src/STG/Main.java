@@ -838,7 +838,7 @@ public class Main extends SimpleApplication {
         screenFadeOverlayMat.setColor("m_Color", new ColorRGBA(0,0,0,screenFadeOverlayAlpha));
         screenFadeOverlayMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
         screenFadeOverlay.setMaterial(screenFadeOverlayMat);
-        screenFadeOverlay.move(screenWidth/2, screenHeight/2, -100);
+        screenFadeOverlay.move(screenWidth/2, screenHeight/2, 10);
         guiNode.attachChild(screenFadeOverlay);
         System.out.println("Assets Loaded");
     }
@@ -1127,7 +1127,7 @@ public class Main extends SimpleApplication {
         stageClearDisplay1 = new BitmapText(guiFont, false);
         stageClearDisplay1.setColor(new ColorRGBA(1f,1f,1f,1));
         stageClearDisplay1.setSize(guiFont.getCharSet().getRenderedSize());
-        stageClearDisplay1.setLocalTranslation(-screenWidth/2, screenHeight/2, 0);
+        stageClearDisplay1.setLocalTranslation(-screenWidth/2, screenHeight/2, 11);
         guiNode.attachChild(stageClearDisplay1);
 
         //Set up Intro Banner
@@ -1382,8 +1382,8 @@ public class Main extends SimpleApplication {
 
                 if(!gamePause) {
                     updateGame(tpf);
-                    if(!screenUnfaded && !gameFlag[GFLAG_SCORE]) {
-                        unfadeScreen(tpf);
+                    if(!gameUnfaded && !gameFlag[GFLAG_SCORE]) {
+                        unfadeGame(tpf);
                     }
                     if(player.getLife() < 0) {
                         System.out.println("Game Over");
@@ -1407,7 +1407,7 @@ public class Main extends SimpleApplication {
                             gameMenu.attachChild(gameOver);
                         }
                     }
-                    fadeScreen(tpf);
+                    fadeGame(tpf);
                 }
                 updateGameMenu();
                 break;
@@ -2085,7 +2085,7 @@ public class Main extends SimpleApplication {
             dialogueFlag[4] = true;
         }
         if(timer[T_EVENT_TIME] > 4 && !gameFlag[STAGE1_1]) {
-            stage3spell5(tpf);
+            stage1spellL(tpf);
             //stage2spell2(tpf);
             //stage2spell1(tpf);
         }
@@ -2995,19 +2995,20 @@ public class Main extends SimpleApplication {
         if(spellTimer[0] > 0 && !gameFlag[52]) {
             clearBullets();
             gameFlag[52] = true;
+            enemy.moveTo(new Vector3f(50,-200,0), 0.2f);
             enemyDeathSequence();
         }
-        if(spellTimer[0] > 2 && !gameFlag[50]) {
+        if(spellTimer[0] > 1 && !gameFlag[50]) {
             System.out.println("Stage 1 Closing");
             enemyDeathEmitter.emitAllParticles();
             enemyDeathEmitter.setParticlesPerSec(0);
-            enemy.moveTo(Vector3f.ZERO, 2f);
+            
             gameFlag[50] = true;
             gameFlag[GFLAG_SCORE] = true;
-            stageClearDisplay1.setText("STAGE 0 CLEAR");
+            stageClearDisplay1.setText("STAGE 1 CLEAR");
         }
         if(spellTimer[0] > 4 && !gameFlag[51]) {
-            fadeScreen(tpf);
+            fadeGame(tpf);
             if(stageClearDisplay1.getLocalTranslation().x < (screenWidth - 100)/2) {
                 stageClearDisplay1.move(7,0,0);
             }
@@ -3969,7 +3970,7 @@ public class Main extends SimpleApplication {
             stageClearDisplay1.setText("STAGE 0 CLEAR");
         }
         if(spellTimer[0] > 4 && !gameFlag[51]) {
-            fadeScreen(tpf);
+            fadeGame(tpf);
             if(stageClearDisplay1.getLocalTranslation().x < (screenWidth - 100)/2) {
                 stageClearDisplay1.move(7,0,0);
             }
@@ -4333,7 +4334,7 @@ public class Main extends SimpleApplication {
             stageClearDisplay1.setText("STAGE 3 CLEAR");
         }
         if(spellTimer[0] > 4 && !gameFlag[51]) {
-            fadeScreen(tpf);
+            fadeGame(tpf);
             if(stageClearDisplay1.getLocalTranslation().x < (screenWidth - 100)/2) {
                 stageClearDisplay1.move(7,0,0);
             }
@@ -4464,7 +4465,7 @@ public class Main extends SimpleApplication {
             stageClearDisplay1.setText("STAGE 4 CLEAR");
         }
         if(spellTimer[0] > 4 && !gameFlag[51]) {
-            fadeScreen(tpf);
+            fadeGame(tpf);
             if(stageClearDisplay1.getLocalTranslation().x < (screenWidth - 100)/2) {
                 stageClearDisplay1.move(7,0,0);
             }
@@ -4497,18 +4498,18 @@ public class Main extends SimpleApplication {
 
         Material mat_red = new Material(assetManager, "Common/MatDefs/Misc/Particle.j3md");
         //mat_red.setTexture("m_Texture", assetManager.loadTexture("Textures/game/spark.png"));
-        mat_red.setTexture("m_Texture", assetManager.loadTexture("Textures/game/particle/gather.png"));
-
+        mat_red.setTexture("m_Texture", assetManager.loadTexture("Textures/game/particle/leaf.png"));
+        mat_red.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
+        enemyDeathEmitter.setQueueBucket(Bucket.Translucent);
         //Leaf explosion
-        /*
         enemyDeathEmitter.setMaterial(mat_red);
         enemyDeathEmitter.setNumParticles(100);
-        enemyDeathEmitter.setImagesX(2); enemyDeathEmitter.setImagesY(2); // 2x2 texture animation
+        enemyDeathEmitter.setImagesX(2); enemyDeathEmitter.setImagesY(1); // 2x2 texture animation
         enemyDeathEmitter.setEndColor(new ColorRGBA(1f, 0f, 0f, 0.9f));   // red
         enemyDeathEmitter.setStartColor(new ColorRGBA(1f, 1f, 0f, 0.2f)); // yellow
         enemyDeathEmitter.getParticleInfluencer().setInitialVelocity(new Vector3f(60,0,0));
         //enemyDeathEmitter.setGravity(3,0,0);
-        //enemyDeathEmitter.setRotateSpeed(20);
+        enemyDeathEmitter.setRotateSpeed(10);
         enemyDeathEmitter.setParticlesPerSec(200);
         enemyDeathEmitter.getParticleInfluencer().setVelocityVariation(1);
         enemyDeathEmitter.setStartSize(12.3f);
@@ -4516,7 +4517,8 @@ public class Main extends SimpleApplication {
         enemyDeathEmitter.setLowLife(0.4f);
         enemyDeathEmitter.setHighLife(1.2f);
         //enemyDeathEmitter.setVelocityVariation(0f);
-        enemyDeathEmitter.move(0,0,0);*/
+        enemyDeathEmitter.move(0,0,0);
+        /*
         enemyDeathEmitter.setMaterial(mat_red);
         enemyDeathEmitter.setNumParticles(60);
         enemyDeathEmitter.setImagesX(1); enemyDeathEmitter.setImagesY(1); // 2x2 texture animation
@@ -4533,33 +4535,33 @@ public class Main extends SimpleApplication {
         enemyDeathEmitter.setLowLife(0.1f);
         enemyDeathEmitter.setHighLife(0.6f);
         //enemyDeathEmitter.setVelocityVariation(0f);
-        enemyDeathEmitter.move(0,0,0);
+        enemyDeathEmitter.move(0,0,0);*/
 
         enemy.attachChild(enemyDeathEmitter);
     }
 
-    boolean screenFaded = false;
-    boolean screenUnfaded = true;
-    private void fadeScreen(float tpf) {
-        if(screenFadeOverlayAlpha < 0.9 && !screenFaded) {
+    boolean gameFaded = false;
+    boolean gameUnfaded = true;
+    private void fadeGame(float tpf) {
+        if(screenFadeOverlayAlpha < 0.9 && !gameFaded) {
             screenFadeOverlayAlpha += tpf;
             screenFadeOverlayMat.setColor("m_Color", new ColorRGBA(0,0,0,screenFadeOverlayAlpha));
         }
         if(screenFadeOverlayAlpha >= 0.9) {
             screenFadeOverlayAlpha = 0.9f;
-            screenFaded = true;
-            screenUnfaded = false;
+            gameFaded = true;
+            gameUnfaded = false;
         }
     }
-    private void unfadeScreen(float tpf) {
-        if(screenFadeOverlayAlpha > 0 && !screenUnfaded) {
+    private void unfadeGame(float tpf) {
+        if(screenFadeOverlayAlpha > 0 && !gameUnfaded) {
             screenFadeOverlayAlpha -= tpf;
             screenFadeOverlayMat.setColor("m_Color", new ColorRGBA(0,0,0,screenFadeOverlayAlpha));
         }
         if(screenFadeOverlayAlpha <= 0) {
             screenFadeOverlayAlpha = 0;
-            screenUnfaded = true;
-            screenFaded = false;
+            gameUnfaded = true;
+            gameFaded = false;
         }
     }
 
@@ -5091,9 +5093,26 @@ public class Main extends SimpleApplication {
                 currBullet.getControl(StraightShot.class).setPause(true);
             }catch(Exception ex) {}
         }
+        ground1Control.setEnabled(false);
+        ground2Control.setEnabled(false);
+        ground3Control.setEnabled(false);
     }
     private void unpauseGame() {
         gamePause = false;
+        System.out.println("Unpausing...");
+        //Pause every bullet
+        StaticBullet currBullet;
+        Iterator bulletIterator = bulletNode.getChildren().iterator();
+
+        while(bulletIterator.hasNext()) {
+            try{
+                currBullet = (StaticBullet)bulletIterator.next();
+                currBullet.getControl(StraightShot.class).setPause(false);
+            }catch(Exception ex) {}
+        }
+        ground1Control.setEnabled(true);
+        ground2Control.setEnabled(true);
+        ground3Control.setEnabled(true);
     }
 
     private ActionListener focusListener = new ActionListener() {

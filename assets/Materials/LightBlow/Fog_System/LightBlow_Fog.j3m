@@ -1,0 +1,6 @@
+Material Base : MatDefs/LightBlow/LightBlow.j3md {
+     MaterialParameters {
+     }
+    AdditionalRenderState {
+    }
+}

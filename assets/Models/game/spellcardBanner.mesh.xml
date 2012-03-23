@@ -1,0 +1,34 @@
+<mesh>
+	<submeshes>
+		<submesh material="spellcardBannerMat/SOLID/TEX/stage2.png" usesharedvertices="false">
+			<faces count="2">
+				<face v1="0" v2="1" v3="2"/>
+				<face v1="0" v2="2" v3="3"/>
+			</faces>
+			<geometry vertexcount="4">
+				<vertexbuffer positions="true" normals="true" texture_coords="1">
+					<vertex>
+						<position x="0.389874" y="19.999992" z="0.010000"/>
+						<normal x="0.000000" y="0.000000" z="1.000000"/>
+						<texcoord u="0.991840" v="-2.315087"/>
+					</vertex>
+					<vertex>
+						<position x="-0.389874" y="20.000004" z="0.010000"/>
+						<normal x="0.000000" y="0.000000" z="1.000000"/>
+						<texcoord u="0.014563" v="-2.315087"/>
+					</vertex>
+					<vertex>
+						<position x="-0.389874" y="-20.000000" z="0.010000"/>
+						<normal x="0.000000" y="0.000000" z="1.000000"/>
+						<texcoord u="0.014559" v="3.255848"/>
+					</vertex>
+					<vertex>
+						<position x="0.389874" y="-20.000004" z="0.010000"/>
+						<normal x="0.000000" y="0.000000" z="1.000000"/>
+						<texcoord u="0.991836" v="3.255848"/>
+					</vertex>
+				</vertexbuffer>
+			</geometry>
+		</submesh>
+	</submeshes>
+</mesh>

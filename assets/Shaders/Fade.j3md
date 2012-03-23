@@ -1,0 +1,24 @@
+MaterialDef Default Fade {
+
+    MaterialParameters {
+        Texture2D m_Texture
+        Float m_Value
+    }
+
+    Technique {
+        VertexShader GLSL100:   Shaders/Fade.vert
+        FragmentShader GLSL100: Shaders/Fade.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+        }
+
+        Defines {
+            TEXTURE : m_Texture
+        }
+    }
+
+    Technique FixedFunc {
+    }
+
+}

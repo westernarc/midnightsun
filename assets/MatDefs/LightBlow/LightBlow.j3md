@@ -1,0 +1,302 @@
+MaterialDef LightBlow {
+
+    MaterialParameters {
+
+        // Fog
+        Boolean Fog
+        Color FogColor
+        TextureCubeMap FogSkyBox
+
+        // Color of RimLighting2
+        Color RimLighting2
+
+        // Color of RimLighting
+        Color RimLighting
+
+        // Light Map
+        Float LightMapIntensity : 1.0
+        Boolean SeperateTexCoord
+        Texture2D LightMap
+
+        // Glow intensity
+        Float GlowIntensity : 1.0
+
+        // No attenuation increases fps
+        Boolean No_Attenuation
+
+     // Output emission from the diffuse map alpha channel
+        Boolean EmissiveMap
+        Float EmissiveIntensity : 1.0
+
+
+     // Output alpha from the diffuse map
+        Boolean Alpha_A_Dif
+
+     // Output alpha from the diffuse map
+        Boolean Alpha_A_Nor   
+       
+        // Switch Normal Map xyz(rgb) channels
+        Boolean Nor_Inv_X
+        Boolean Nor_Inv_Y
+        Boolean Nor_Inv_Z
+
+        // IBL Map for Image Based Lighting
+        TextureCubeMap IblMap
+        Float iblIntensity : 1.0
+
+        // Switch Hemispherical Lighting on/off
+        Boolean Hemi_Lighting_1
+        Boolean Hemi_Lighting_2
+
+        // Specular lighting
+        Boolean Specular_Lighting
+        Float SpecIntensity : 1.0
+        Float Shininess (MaterialShininess) : 1 // Specular power/shininess
+        Boolean Spec_A_Nor // Output specular from the normal map alpha channel
+        Boolean Spec_A_Dif // Output specular from the diffuse map alpha channel
+
+        // Reflection
+        TextureCubeMap RefMap // Ref Map for reflection
+        Boolean Ref_A_Nor // Output reflection from the normal map alpha channel
+        Boolean Ref_A_Dif // Output reflection from the diffuse map alpha channel
+        Float RefPower : 1.0 // Reflection Intensity
+        Float RefIntensity : 1.0 // Reflection normal map alpha channel Intensity
+        Boolean AdditiveReflection
+
+        // Compute vertex lighting in the shader
+        // For better performance
+        Boolean VertexLighting
+
+        // Use more efficent algorithms to improve performance
+        Boolean LowQuality
+
+        // Improve quality at the cost of performance
+        Boolean HighQuality
+
+        // Apha threshold for fragment discarding
+        Float AlphaDiscardThreshold
+
+        // Normal map is in BC5/ATI2n/LATC/3Dc compression format
+        Boolean LATC
+
+        // Use the provided ambient, diffuse, and specular colors
+        Boolean UseMaterialColors
+
+        // Activate shading along the tangent, instead of the normal
+        // Requires tangent data to be available on the model.
+        Boolean VTangent
+
+        // Use minnaert diffuse instead of lambert
+        Color Minnaert
+        
+        // Use ward specular instead of phong
+        Boolean WardIso
+
+        // Use vertex color as an additional diffuse color.
+        Boolean UseVertexColor
+
+        // Ambient color
+        Color Ambient (MaterialAmbient)
+
+        // Diffuse color
+        Color Diffuse (MaterialDiffuse)
+
+        // Specular color
+        Color Specular (MaterialSpecular)
+
+        // Diffuse map
+        Texture2D DiffuseMap
+
+        // Normal map
+        Texture2D NormalMap
+
+        // Specular/gloss map
+        Texture2D SpecularMap
+
+        // Parallax/height map
+        Texture2D ParallaxMap
+        Boolean Parallax_A_Nor  // Output parallax map from the normal map alpha channel
+        Boolean PackedNormalParallax  // Set to true is parallax map is stored in the alpha channel of the normal map
+        Float ParallaxHeight : 0.05   // Sets the relief height for parallax mapping
+        Boolean SteepParallax  // Set to true to activate Steep Parallax mapping
+
+        // Color ramp, will map diffuse and specular values through it.
+        Texture2D ColorRamp
+
+        // Texture of the glowing parts of the material
+        Texture2D GlowMap
+
+        // The glow color of the object
+        Color GlowColor
+
+        // Parameters for fresnel
+        // X = bias
+        // Y = scale
+        // Z = power
+      //  Vector3 FresnelParams
+
+        // the ref map is a spheremap and not a cube map
+        Boolean SphereMap
+    }
+
+    Technique {
+
+        LightMode MultiPass
+
+        VertexShader GLSL100:   Shaders/LightBlow/LightBlow.vert
+        FragmentShader GLSL100: Shaders/LightBlow/LightBlow.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            NormalMatrix
+            WorldViewMatrix
+            ViewMatrix
+            CameraPosition
+            WorldMatrix
+        }
+
+        Defines {
+
+            RIM_LIGHTING_2 : RimLighting2
+            RIM_LIGHTING : RimLighting
+            SEPERATE_TEXCOORD : SeperateTexCoord
+            HAS_LIGHTMAP : LightMap
+            ALPHA_A_DIF : Alpha_A_Dif
+            ALPHA_A_NOR : Alpha_A_Nor
+            NO_ATTENUATION : No_Attenuation
+            EMISSIVEMAP : EmissiveMap
+            NOR_INV_X : Nor_Inv_X
+            NOR_INV_Y : Nor_Inv_Y
+            NOR_INV_Z : Nor_Inv_Z
+            IBL : IblMap
+            HEMI_LIGHTING_1 : Hemi_Lighting_1
+            HEMI_LIGHTING_2 : Hemi_Lighting_2
+            SPECULAR_LIGHTING : Specular_Lighting
+            SPEC_A_NOR : Spec_A_Nor 
+            SPEC_A_DIF : Spec_A_Dif
+            REF_A_NOR : Ref_A_Nor 
+            REF_A_DIF : Ref_A_Dif
+            PARALLAX_A_NOR : Parallax_A_Nor
+
+            LATC : LATC
+            VERTEX_COLOR : UseVertexColor
+            VERTEX_LIGHTING : VertexLighting
+            ATTENUATION : Attenuation
+            MATERIAL_COLORS : UseMaterialColors
+            V_TANGENT : VTangent
+            MINNAERT  : Minnaert
+            WARDISO   : WardIso
+            LOW_QUALITY : LowQuality
+            HQ_ATTENUATION : HighQuality
+
+            DIFFUSEMAP : DiffuseMap
+            NORMALMAP : NormalMap
+            SPECULARMAP : SpecularMap
+            PARALLAXMAP : ParallaxMap
+            NORMALMAP_PARALLAX : PackedNormalParallax
+            STEEP_PARALLAX : SteepParallax
+            COLORRAMP : ColorRamp
+            REFLECTION : RefMap
+            ADDITIVE_REFLECTION : AdditiveReflection
+            SPHERE_MAP : SphereMap
+            FOG : Fog
+            FOG_SKY : FogSkyBox
+        }
+
+    }
+
+    Technique PreShadow {
+
+        VertexShader GLSL100 :   Common/MatDefs/Shadow/PreShadow.vert
+        FragmentShader GLSL100 : Common/MatDefs/Shadow/PreShadow.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            WorldViewMatrix
+        }
+
+        Defines {
+            DIFFUSEMAP_ALPHA : DiffuseMap
+        }
+
+        RenderState {
+            FaceCull Off
+            DepthTest On
+            DepthWrite On
+            PolyOffset 5 0
+            ColorWrite Off
+        }
+
+    }
+
+  Technique PreNormalPass {
+
+        VertexShader GLSL100 :   Common/MatDefs/SSAO/normal.vert
+        FragmentShader GLSL100 : Common/MatDefs/SSAO/normal.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            WorldViewMatrix
+            NormalMatrix
+        }
+
+        Defines {
+            DIFFUSEMAP_ALPHA : DiffuseMap
+        }
+
+        RenderState {
+
+        }
+
+    }
+
+
+    Technique FixedFunc {
+        LightMode FixedPipeline
+    }
+
+    Technique GBuf {
+
+        VertexShader GLSL100:   Common/MatDefs/Light/GBuf.vert
+        FragmentShader GLSL100: Common/MatDefs/Light/GBuf.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            NormalMatrix
+            WorldViewMatrix
+            WorldMatrix
+        }
+
+        Defines {
+            VERTEX_COLOR : UseVertexColor
+            MATERIAL_COLORS : UseMaterialColors
+            V_TANGENT : VTangent
+            MINNAERT  : Minnaert
+            WARDISO   : WardIso
+
+            DIFFUSEMAP : DiffuseMap
+            NORMALMAP : NormalMap
+            SPECULARMAP : SpecularMap
+            PARALLAXMAP : ParallaxMap
+        }
+    }
+
+    Technique FixedFunc {
+        LightMode FixedPipeline
+    }
+
+    Technique Glow {
+
+        VertexShader GLSL100:   Common/MatDefs/Misc/SimpleTextured.vert
+        FragmentShader GLSL100: Shaders/PostBlow/GlowBlow.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+        }
+
+        Defines {
+            HAS_GLOWMAP : GlowMap
+            HAS_GLOWCOLOR : GlowColor
+        }
+    }
+}

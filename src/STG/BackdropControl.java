@@ -25,7 +25,7 @@ public class BackdropControl implements Control {
     private float cycleTime;
     private float cycleLength;
     private float distanceMoved;
-    
+    private boolean enabled;
     public BackdropControl(Spatial spatial, int stage, float length, float speed, float timeOffset, float cycleLength) {
         this.spatial = spatial;
         this.stage = stage;
@@ -34,15 +34,18 @@ public class BackdropControl implements Control {
         distanceMoved = 0;
         cycleTime = timeOffset;
         this.cycleLength = cycleLength;
+        enabled = true;
     }
 
     public void update(float tpf) {
-        spatial.move(0 , -tpf * speed, 0);
-        cycleTime -= tpf;
-        if(cycleTime < 0) {
-            cycleTime = cycleLength;
-            spatial.move(0f , length*3, 0f);
-            distanceMoved = 0;
+        if(enabled) {
+            spatial.move(0 , -tpf * speed, 0);
+            cycleTime -= tpf;
+            if(cycleTime < 0) {
+                cycleTime = cycleLength;
+                spatial.move(0f , length*3, 0f);
+                distanceMoved = 0;
+            }
         }
     }
 
@@ -57,10 +60,11 @@ public class BackdropControl implements Control {
         this.spatial = spatial;
     }
     public void setEnabled(boolean enabled) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        this.enabled = enabled;
     }
+    
     public boolean isEnabled() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return enabled;
     }
     public void render(RenderManager rm, ViewPort vp) {
     }

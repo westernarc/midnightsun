@@ -1,0 +1,64 @@
+<skeleton>
+	<bones>
+		<bone id="0" name="R1">
+			<position x="133.859863" y="212.495468" z="-308.503906"/>
+			<rotation angle="1.951870">
+				<axis x="0.993610" y="-0.045913" z="-0.103108"/>
+			</rotation>
+		</bone>
+		<bone id="3" name="LL1">
+			<position x="-217.292770" y="495.289459" z="-112.099258"/>
+			<rotation angle="2.057333">
+				<axis x="0.987549" y="0.008804" z="-0.157063"/>
+			</rotation>
+		</bone>
+		<bone id="4" name="Base">
+			<position x="-23.026342" y="184.737122" z="-80.930115"/>
+			<rotation angle="2.039944">
+				<axis x="0.980522" y="-0.029765" z="-0.194140"/>
+			</rotation>
+		</bone>
+		<bone id="6" name="L1">
+			<position x="-144.096207" y="436.342041" z="-153.039139"/>
+			<rotation angle="2.085830">
+				<axis x="0.984522" y="0.021453" z="-0.173942"/>
+			</rotation>
+		</bone>
+		<bone id="8" name="RR1">
+			<position x="218.958817" y="143.962662" z="-356.101013"/>
+			<rotation angle="1.999336">
+				<axis x="0.991844" y="-0.019575" z="-0.125950"/>
+			</rotation>
+		</bone>
+		<bone id="1" name="R2">
+			<position x="-0.000027" y="495.380676" z="0.000000"/>
+			<rotation angle="3.140961">
+				<axis x="0.003085" y="0.999993" z="0.001996"/>
+			</rotation>
+		</bone>
+		<bone id="2" name="LL2">
+			<position x="-0.000027" y="491.049408" z="-0.000017"/>
+			<rotation angle="3.124431">
+				<axis x="0.023108" y="0.999638" z="0.013748"/>
+			</rotation>
+		</bone>
+		<bone id="5" name="L2">
+			<position x="-0.000002" y="492.170319" z="0.000001"/>
+			<rotation angle="3.120663">
+				<axis x="0.023677" y="0.999627" z="0.013586"/>
+			</rotation>
+		</bone>
+		<bone id="7" name="RR2">
+			<position x="-0.000024" y="491.751587" z="-0.000008"/>
+			<rotation angle="3.133670">
+				<axis x="0.025327" y="-0.999548" z="0.016210"/>
+			</rotation>
+		</bone>
+	</bones>
+	<bonehierarchy>
+		<boneparent bone="R2" parent="R1" />
+		<boneparent bone="LL2" parent="LL1" />
+		<boneparent bone="L2" parent="L1" />
+		<boneparent bone="RR2" parent="RR1" />
+	</bonehierarchy>
+</skeleton>

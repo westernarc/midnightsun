@@ -1,0 +1,27 @@
+Material LightBlow_1 : MatDefs/LightBlow/LightBlow.j3md {
+     MaterialParameters {
+        DiffuseMap : Flip Models/LightBlow/jme_lightblow_dif.png
+        NormalMap : Flip Models/LightBlow/jme_lightblow_nor.png
+        IblMap : Flip Textures/Water32.dds
+        iblIntensity : 1.8
+        EmissiveMap : true
+        Specular_Lighting : false
+        Spec_A_Nor : false
+        SpecIntensity : 2.5
+        Specular : 1.0 1.0 1.0 1.0
+        Shininess : 5.0
+        Nor_Inv_Y : false
+        GlowIntensity : 1.2
+
+
+
+        GlowMap : Flip Models/LightBlow/jme_lightblow_dif.png
+
+
+     }
+    AdditionalRenderState {
+
+
+
+    }
+}

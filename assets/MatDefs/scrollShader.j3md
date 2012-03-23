@@ -1,0 +1,32 @@
+MaterialDef Scroll Texture {
+
+    MaterialParameters {
+        Texture2D m_ColorMap
+        Float m_ScrollX
+        Float m_ScrollY
+        Boolean m_YCoCg
+        Boolean m_LATC
+        Boolean m_Normalize
+        Boolean m_ShowAlpha
+    }
+
+    Technique {
+        VertexShader GLSL100:   Shaders/scrollShader.vert
+        FragmentShader GLSL100: Common/MatDefs/Misc/SimpleTextured.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+        }
+
+        Defines {
+            DXT_YCOCG : m_YCoCg
+            NORMAL_LATC : m_LATC
+            NORMALIZE : m_Normalize
+            SHOW_ALPHA : m_ShowAlpha
+        }
+    }
+
+    Technique FixedFunc {
+    }
+
+}

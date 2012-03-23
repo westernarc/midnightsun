@@ -1,0 +1,17 @@
+material cardshotWMat/SOLID/TEX/talisman.jpg/TWOSIDE
+{
+	technique
+	{
+		pass
+		{
+			diffuse 0.800000 0.800000 0.800000
+			specular 0.000000 0.000000 0.000000 12.500000
+			cull_hardware none
+			cull_software none
+			texture_unit
+			{
+				texture talisman.jpg
+			}
+		}
+	}
+}

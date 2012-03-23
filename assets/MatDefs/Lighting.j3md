@@ -1,0 +1,192 @@
+MaterialDef Phong Lighting {
+
+    MaterialParameters {
+
+        // Compute vertex lighting in the shader
+        // For better performance
+        Boolean m_VertexLighting
+
+        // Use more efficent algorithms to improve performance
+        Boolean m_LowQuality
+
+        // Improve quality at the cost of performance
+        Boolean m_HighQuality
+
+        // Output alpha from the diffuse map
+        Boolean m_UseAlpha
+
+        // Normal map is in BC5/ATI2n/LATC/3Dc compression format
+        Boolean m_LATC
+
+        // Use the provided ambient, diffuse, and specular colors
+        Boolean m_UseMaterialColors
+
+        // Activate shading along the tangent, instead of the normal
+        // Requires tangent data to be available on the model.
+        Boolean m_VTangent
+
+        // Use minnaert diffuse instead of lambert
+        Boolean m_Minnaert
+
+        // Use ward specular instead of phong
+        Boolean m_WardIso
+
+        // Use vertex color as an additional diffuse color.
+        Boolean m_UseVertexColor
+
+        // Ambient color
+        Color m_Ambient
+
+        // Diffuse color
+        Color m_Diffuse
+
+        // Specular color
+        Color m_Specular
+
+        // Specular power/shininess
+        Float m_Shininess
+
+        // Diffuse map
+        Texture2D m_DiffuseMap
+
+        // Normal map
+        Texture2D m_NormalMap
+
+        // Specular/gloss map
+        Texture2D m_SpecularMap
+
+        // Parallax/height map
+        Texture2D m_ParallaxMap
+
+        // Texture that specifies alpha values
+        Texture2D m_AlphaMap
+
+        // Color ramp, will map diffuse and specular values through it.
+        Texture2D m_ColorRamp
+
+        // Texture of the glowing parts of the material
+        Texture2D m_GlowMap
+
+        // The glow color of the object
+        Color m_GlowColor
+    }
+
+    Technique {
+
+        LightMode MultiPass
+
+        VertexShader GLSL100:   Common/MatDefs/Light/Lighting.vert
+        FragmentShader GLSL100: Common/MatDefs/Light/Lighting.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            NormalMatrix
+            WorldViewMatrix
+            ViewMatrix
+        }
+
+        Defines {
+            LATC : m_LATC
+            VERTEX_COLOR : m_UseVertexColor
+            VERTEX_LIGHTING : m_VertexLighting
+            ATTENUATION : m_Attenuation
+            MATERIAL_COLORS : m_UseMaterialColors
+            V_TANGENT : m_VTangent
+            MINNAERT  : m_Minnaert
+            WARDISO   : m_WardIso
+            LOW_QUALITY : m_LowQuality
+            HQ_ATTENUATION : m_HighQuality
+
+            DIFFUSEMAP : m_DiffuseMap
+            NORMALMAP : m_NormalMap
+            SPECULARMAP : m_SpecularMap
+            PARALLAXMAP : m_ParallaxMap
+            ALPHAMAP : m_AlphaMap
+            COLORRAMP : m_ColorRamp
+        }
+    }
+
+    Technique AmbientPass {
+
+        VertexShader GLSL100:   Common/MatDefs/Light/AmbientPass.vert
+        FragmentShader GLSL100: Common/MatDefs/Light/AmbientPass.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+        }
+
+        Defines {
+            HAS_VERTEXCOLOR : m_UseVertexColor
+            HAS_DIFFUSEMAP : m_DiffuseMap
+            MATERIAL_COLORS : m_UseMaterialColors
+        }
+    }
+
+    Technique PreShadow {
+
+        VertexShader GLSL100 :   Common/MatDefs/Shadow/PreShadow.vert
+        FragmentShader GLSL100 : Common/MatDefs/Shadow/PreShadow.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            WorldViewMatrix
+        }
+
+        Defines {
+            DIFFUSEMAP_ALPHA : m_DiffuseMap
+        }
+
+        RenderState {
+            FaceCull Off
+            DepthTest On
+            DepthWrite On
+            PolyOffset 5 0
+            ColorWrite Off
+        }
+
+    }
+
+    Technique GBuf {
+
+        VertexShader GLSL100:   Common/MatDefs/Light/GBuf.vert
+        FragmentShader GLSL100: Common/MatDefs/Light/GBuf.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            WorldMatrix
+        }
+
+        Defines {
+            VERTEX_COLOR : m_UseVertexColor
+            MATERIAL_COLORS : m_UseMaterialColors
+            V_TANGENT : m_VTangent
+            MINNAERT  : m_Minnaert
+            WARDISO   : m_WardIso
+
+            DIFFUSEMAP : m_DiffuseMap
+            NORMALMAP : m_NormalMap
+            SPECULARMAP : m_SpecularMap
+            PARALLAXMAP : m_ParallaxMap
+        }
+    }
+
+    Technique FixedFunc {
+        LightMode FixedPipeline
+    }
+
+    Technique Glow {
+
+        VertexShader GLSL100:   Common/MatDefs/Misc/SimpleTextured.vert
+        FragmentShader GLSL100: Common/MatDefs/Light/Glow.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+        }
+
+        Defines {
+            HAS_GLOWMAP : m_GlowMap
+            HAS_GLOWCOLOR : m_GlowColor
+        }
+    }
+
+}

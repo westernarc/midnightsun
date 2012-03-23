@@ -1,0 +1,14 @@
+material field2Mat/SOLID/TEX/field2.png
+{
+	technique
+	{
+		pass
+		{
+			specular 0.500000 0.500000 0.500000 12.500000
+			texture_unit
+			{
+				texture field2.png
+			}
+		}
+	}
+}

@@ -1,0 +1,14 @@
+material playerMat/SOLID/TEX/moko.png
+{
+	technique
+	{
+		pass
+		{
+			specular 0.000000 0.000000 0.000000 12.500000
+			texture_unit
+			{
+				texture moko.png
+			}
+		}
+	}
+}

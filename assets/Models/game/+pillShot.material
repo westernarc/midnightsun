@@ -1,0 +1,15 @@
+material AsteroidMat/SOLID/TEX/roundShotR.png
+{
+	technique
+	{
+		pass
+		{
+			diffuse 0.560000 0.560000 0.560000
+			specular 0.000000 0.000000 0.000000 12.500000
+			texture_unit
+			{
+				texture roundShotR.png
+			}
+		}
+	}
+}

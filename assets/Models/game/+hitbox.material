@@ -1,0 +1,32 @@
+material playerMat/SOLID/TEX/moko.png/TWOSIDE
+{
+	technique
+	{
+		pass
+		{
+			diffuse 1.000000 1.000000 1.000000
+			specular 0.000000 0.000000 0.000000 12.500000
+			cull_hardware none
+			cull_software none
+			texture_unit
+			{
+				texture moko.png
+			}
+		}
+	}
+}
+material playerMat/SOLID/TEX/moko.png
+{
+	technique
+	{
+		pass
+		{
+			diffuse 1.000000 1.000000 1.000000
+			specular 0.000000 0.000000 0.000000 12.500000
+			texture_unit
+			{
+				texture moko.png
+			}
+		}
+	}
+}

@@ -1,0 +1,58 @@
+material houraiMat/TWOSIDE
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			ambient 0.500000 0.500000 0.500000 1.000000
+			diffuse 0.100000 0.100000 0.100000 1.000000
+			emissive 0.700000 0.700000 0.700000 1.000000
+			cull_hardware none
+			cull_software none
+			texture_unit
+			{
+				texture hourai.png
+				tex_address_mode wrap
+				filtering trilinear
+				colour_op modulate
+			}
+		}
+		pass
+		{
+			ambient 0.0 0.0 0.0
+			diffuse 0.0 0.0 0.0
+			specular 0.000000 0.000000 0.000000 1.000000 12.500000
+			scene_blend add
+			cull_hardware none
+			cull_software none
+		}
+	}
+}
+material houraiMat
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			ambient 0.500000 0.500000 0.500000 1.000000
+			diffuse 0.100000 0.100000 0.100000 1.000000
+			emissive 0.700000 0.700000 0.700000 1.000000
+			texture_unit
+			{
+				texture hourai.png
+				tex_address_mode wrap
+				filtering trilinear
+				colour_op modulate
+			}
+		}
+		pass
+		{
+			ambient 0.0 0.0 0.0
+			diffuse 0.0 0.0 0.0
+			specular 0.000000 0.000000 0.000000 1.000000 12.500000
+			scene_blend add
+		}
+	}
+}

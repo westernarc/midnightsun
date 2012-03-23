@@ -1,0 +1,47 @@
+material moonMat
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			ambient 0.492902 0.492902 0.492902 1.000000
+			diffuse 1.000000 1.000000 1.000000 1.000000
+			specular 0.000000 0.000000 0.000000 1.000000 0.250000
+			emissive 1.000000 1.000000 1.000000 1.000000
+			fog_override true
+			texture_unit
+			{
+				texture MoonTM0360.jpg
+				tex_address_mode wrap
+				filtering trilinear
+				colour_op alpha_blend
+			}
+		}
+	}
+}
+material mainMenuMat/TWOSIDE
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			ambient 0.500000 0.500000 0.500000 0.000000
+			diffuse 0.800000 0.800000 0.800000 0.000000
+			specular 0.000000 0.000000 0.000000 0.000000 12.500000
+			emissive 0.000000 0.000000 0.000000 0.000000
+			scene_blend alpha_blend
+			depth_write off
+			cull_hardware none
+			cull_software none
+			lighting off
+			texture_unit
+			{
+				texture mainMenu.png
+				tex_address_mode wrap
+				filtering trilinear
+			}
+		}
+	}
+}

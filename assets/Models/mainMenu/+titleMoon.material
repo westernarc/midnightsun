@@ -1,0 +1,22 @@
+material moonMat
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			ambient 0.492902 0.492902 0.492902 1.000000
+			diffuse 1.000000 1.000000 1.000000 1.000000
+			specular 0.000000 0.000000 0.000000 1.000000 0.250000
+			emissive 1.000000 1.000000 1.000000 1.000000
+			fog_override true
+			texture_unit
+			{
+				texture MoonTM0360.jpg
+				tex_address_mode wrap
+				filtering trilinear
+				colour_op alpha_blend
+			}
+		}
+	}
+}

@@ -503,7 +503,7 @@ public class Main extends SimpleApplication {
         openSplashState = new StateNode("openSplashNode");
 
         openSplashPanel = new PanelNode("openSplashPanel");
-        openSplashPanelModel = assetManager.loadModel("Models/openSplash/logo.mesh.xml");
+        openSplashPanelModel = assetManager.loadModel("Models/openSplash/logo.j3o");
         openSplashPanelMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         openSplashPanelMat.setTexture("m_ColorMap", assetManager.loadTexture("Models/openSplash/openSplashTex.png"));
         openSplashPanelModel.setMaterial(openSplashPanelMat);
@@ -539,7 +539,7 @@ public class Main extends SimpleApplication {
         mainMenuState = new StateNode("mainMenuNode");
 
         titleBackground = new PanelNode("titleBackgroundPanel");
-        titleBackgroundModel = assetManager.loadModel("Models/mainMenu/movie.mesh.xml");
+        titleBackgroundModel = assetManager.loadModel("Models/mainMenu/movie.j3o");
         titleBackgroundMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         titleBackgroundMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/mainMenu/frame1.png"));
         //titleBackgroundMat.getAdditionalRenderState().setBlendMode(BlendMode.Off);
@@ -554,7 +554,7 @@ public class Main extends SimpleApplication {
 
 
         titlePanel = new PanelNode("titleLable");
-        titlePanelModel = assetManager.loadModel("Models/mainMenu/title.mesh.xml");
+        titlePanelModel = assetManager.loadModel("Models/mainMenu/title.j3o");
         titlePanelMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         TextureKey titlePanelMatTextureKey = new TextureKey("Textures/mainMenu/titleTex.png", false);
         Texture titlePanelMatTex = assetManager.loadTexture(titlePanelMatTextureKey);
@@ -568,7 +568,7 @@ public class Main extends SimpleApplication {
         titleUIElements.attachChild(titlePanel);
 
         startButton = new ButtonNode("startButton");
-        startButtonModel = assetManager.loadModel("Models/mainMenu/startButton.mesh.xml");
+        startButtonModel = assetManager.loadModel("Models/mainMenu/startButton.j3o");
         startButton.move(0,2,0);
         startButtonMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         startButtonMat.setTexture("m_ColorMap", titlePanelMatTex);
@@ -581,7 +581,7 @@ public class Main extends SimpleApplication {
 
         exitButton = new ButtonNode("exitButton");
         exitButton.move(0,3,0);
-        exitButtonModel = assetManager.loadModel("Models/mainMenu/exitButton.mesh.xml");
+        exitButtonModel = assetManager.loadModel("Models/mainMenu/exitButton.j3o");
         exitButtonMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         exitButtonMat.setTexture("m_ColorMap", titlePanelMatTex);
         exitButtonMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
@@ -624,7 +624,7 @@ public class Main extends SimpleApplication {
         gameStartState = new StateNode("gameStartState");
 
         instructionsPanel = new PanelNode("instructions");
-        instructionsPanelModel = assetManager.loadModel("Models/gameStart/logo.mesh.xml");
+        instructionsPanelModel = assetManager.loadModel("Models/gameStart/logo.j3o");
         instructionsPanelMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         instructionsPanelMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Models/gameStart/logo.png",false)));
 
@@ -647,21 +647,21 @@ public class Main extends SimpleApplication {
     }
 
     private void loadAssets() {
-        hourai = assetManager.loadModel("Models/game/hourai.mesh.xml");
-        houraiMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        houraiMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/hourai.png",false)));
+        hourai = assetManager.loadModel("/Models/game/hourai.j3o");
+        houraiMat = new Material(assetManager, "/Common/MatDefs/Misc/Unshaded.j3md");
+        houraiMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("/Textures/game/hourai.png",false)));
         hourai.setMaterial(houraiMat);
         
-        hourailance = assetManager.loadModel("Models/game/hourailance.mesh.xml");
+        hourailance = assetManager.loadModel("Models/game/hourailance.j3o");
         hourailance.setMaterial(houraiMat);
         
-        houraisword = assetManager.loadModel("Models/game/houraisword.mesh.xml");
+        houraisword = assetManager.loadModel("Models/game/houraisword.j3o");
         houraisword.setMaterial(houraiMat);
         houraiMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
         houraiMat.setColor("m_Color", new ColorRGBA(1,1,1, 0));
         hourai.setMaterial(houraiMat);
         
-        talismanW = assetManager.loadModel("Models/game/cardshot.mesh.xml");
+        talismanW = assetManager.loadModel("Models/game/cardshot.j3o");
         talismanWMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         talismanWMat.setTexture("m_DiffuseMap", assetManager.loadTexture("Textures/game/bullets/talismanW.png"));
         talismanWMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/bullets/talismanW.png"));
@@ -669,7 +669,7 @@ public class Main extends SimpleApplication {
         talismanWMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
         talismanW.setMaterial(talismanWMat);
 
-        talismanR = assetManager.loadModel("Models/game/cardshot.mesh.xml");
+        talismanR = assetManager.loadModel("Models/game/cardshot.j3o");
         talismanRMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         talismanRMat.setTexture("m_DiffuseMap", assetManager.loadTexture("Textures/game/bullets/talismanR.png"));
         talismanRMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/bullets/talismanR.png"));
@@ -678,102 +678,102 @@ public class Main extends SimpleApplication {
         talismanRMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
         talismanR.setMaterial(talismanRMat);
 
-        ballShotW = assetManager.loadModel("/Models/game/ballshot.mesh.xml");
+        ballShotW = assetManager.loadModel("/Models/game/ballshot.j3o");
         ballShotWMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         ballShotWMat.setTexture("m_DiffuseMap", assetManager.loadTexture("Textures/game/roundShotW.png"));
         ballShotWMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/roundShotW.png"));
         ballShotWMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
 
-        ballShotR = assetManager.loadModel("Models/game/ballshot.mesh.xml");
+        ballShotR = assetManager.loadModel("Models/game/ballshot.j3o");
         ballShotRMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         ballShotRMat.setTexture("m_DiffuseMap", assetManager.loadTexture("Textures/game/roundShotR.png"));
         ballShotRMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/roundShotR.png"));
         ballShotRMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
 
-        ballShotB = assetManager.loadModel("Models/game/ballshot.mesh.xml");
+        ballShotB = assetManager.loadModel("Models/game/ballshot.j3o");
         ballShotBMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         ballShotBMat.setTexture("m_DiffuseMap", assetManager.loadTexture("Textures/game/roundShotB.png"));
         ballShotBMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/roundShotB.png"));
         ballShotBMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
 
-        ballShotP = assetManager.loadModel("Models/game/ballshot.mesh.xml");
+        ballShotP = assetManager.loadModel("Models/game/ballshot.j3o");
         ballShotPMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         ballShotPMat.setTexture("m_DiffuseMap", assetManager.loadTexture("Textures/game/bullets/arrowP.png"));
         ballShotPMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/bullets/arrowP.png"));
         ballShotPMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
         
-        pillShotR = assetManager.loadModel("Models/game/pillShot.mesh.xml");
+        pillShotR = assetManager.loadModel("Models/game/pillShot.j3o");
         pillShotRMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         pillShotRMat.setTexture("m_DiffuseMap", assetManager.loadTexture("Textures/game/roundShotR.png"));
         pillShotRMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/roundShotR.png"));
 
-        petalShotR = assetManager.loadModel("Models/game/petalshotR.mesh.xml");
+        petalShotR = assetManager.loadModel("Models/game/petalshotR.j3o");
         petalShotRMat = talismanRMat;
 
-        arrowShotR = assetManager.loadModel("Models/game/arrow.mesh.xml");
+        arrowShotR = assetManager.loadModel("Models/game/arrow.j3o");
         arrowShotRMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         TextureKey arrowShotRMatTextureKey = new TextureKey("Textures/game/bullets/arrowR.png", false);
         arrowShotRMat.setTexture("m_DiffuseMap", assetManager.loadTexture(arrowShotRMatTextureKey));
         arrowShotRMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/bullets/arrowR.png"));
         arrowShotRMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
 
-                arrowShotB = assetManager.loadModel("Models/game/arrow.mesh.xml");
+                arrowShotB = assetManager.loadModel("Models/game/arrow.j3o");
         arrowShotBMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         TextureKey arrowShotBMatTextureKey = new TextureKey("Textures/game/bullets/arrowB.png", false);
         arrowShotBMat.setTexture("m_DiffuseMap", assetManager.loadTexture(arrowShotBMatTextureKey));
         arrowShotBMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/bullets/arrowB.png"));
         arrowShotBMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
-                arrowShotP = assetManager.loadModel("Models/game/arrow.mesh.xml");
+                arrowShotP = assetManager.loadModel("Models/game/arrow.j3o");
         arrowShotPMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         TextureKey arrowShotPMatTextureKey = new TextureKey("Textures/game/bullets/arrowP.png", false);
         arrowShotPMat.setTexture("m_DiffuseMap", assetManager.loadTexture(arrowShotPMatTextureKey));
         arrowShotPMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/bullets/arrowP.png"));
         arrowShotPMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
-                arrowShotT = assetManager.loadModel("Models/game/arrow.mesh.xml");
+                arrowShotT = assetManager.loadModel("Models/game/arrow.j3o");
         arrowShotTMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         TextureKey arrowShotTMatTextureKey = new TextureKey("Textures/game/bullets/arrowT.png", false);
         arrowShotTMat.setTexture("m_DiffuseMap", assetManager.loadTexture(arrowShotTMatTextureKey));
         arrowShotTMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/bullets/arrowT.png"));
         arrowShotTMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
-                arrowShotG = assetManager.loadModel("Models/game/arrow.mesh.xml");
+                arrowShotG = assetManager.loadModel("Models/game/arrow.j3o");
         arrowShotGMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         TextureKey arrowShotGMatTextureKey = new TextureKey("Textures/game/bullets/arrowG.png", false);
         arrowShotGMat.setTexture("m_DiffuseMap", assetManager.loadTexture(arrowShotGMatTextureKey));
         arrowShotGMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/bullets/arrowG.png"));
         arrowShotGMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
         
-        arrowShotW = assetManager.loadModel("Models/game/arrow.mesh.xml");
+        arrowShotW = assetManager.loadModel("Models/game/arrow.j3o");
         arrowShotWMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         TextureKey arrowShotWMatTextureKey = new TextureKey("Textures/game/bullets/arrowW.png", false);
         arrowShotWMat.setTexture("m_DiffuseMap", assetManager.loadTexture(arrowShotWMatTextureKey));
         arrowShotWMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/bullets/arrowW.png"));
         arrowShotWMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
-        arrowShotO = assetManager.loadModel("Models/game/arrow.mesh.xml");
+        arrowShotO = assetManager.loadModel("Models/game/arrow.j3o");
         arrowShotOMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         TextureKey arrowShotOMatTextureKey = new TextureKey("Textures/game/bullets/arrowO.png", false);
         arrowShotOMat.setTexture("m_DiffuseMap", assetManager.loadTexture(arrowShotOMatTextureKey));
         arrowShotOMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/bullets/arrowO.png"));
         arrowShotOMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
-        arrowShotY = assetManager.loadModel("Models/game/arrow.mesh.xml");
+        arrowShotY = assetManager.loadModel("Models/game/arrow.j3o");
         arrowShotYMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         TextureKey arrowShotYMatTextureKey = new TextureKey("Textures/game/bullets/arrowY.png", false);
         arrowShotYMat.setTexture("m_DiffuseMap", assetManager.loadTexture(arrowShotYMatTextureKey));
         arrowShotYMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/bullets/arrowY.png"));
         arrowShotYMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
         
-        knifeB = assetManager.loadModel("Models/game/bullets/knife.mesh.xml");
+        knifeB = assetManager.loadModel("Models/game/bullets/knife.j3o");
         knifeBMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         TextureKey knifeBMatTextureKey = new TextureKey("Textures/game/bullets/knifeB.png", false);
         knifeBMat.setTexture("m_DiffuseMap", assetManager.loadTexture(knifeBMatTextureKey));
         knifeBMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/bullets/knifeB.png"));
         knifeBMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
-                knifeK = assetManager.loadModel("Models/game/bullets/knife.mesh.xml");
+                knifeK = assetManager.loadModel("Models/game/bullets/knife.j3o");
         knifeKMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         TextureKey knifeKMatTextureKey = new TextureKey("Textures/game/bullets/knifeK.png", false);
         knifeKMat.setTexture("m_DiffuseMap", assetManager.loadTexture(knifeKMatTextureKey));
         knifeKMat.setTexture("m_GlowMap", assetManager.loadTexture("Textures/game/bullets/knifeK.png"));
         knifeKMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
-                knifeW = assetManager.loadModel("Models/game/bullets/knife.mesh.xml");
+                knifeW = assetManager.loadModel("Models/game/bullets/knife.j3o");
         knifeWMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         TextureKey knifeWMatTextureKey = new TextureKey("Textures/game/bullets/knifeW.png", false);
         knifeWMat.setTexture("m_DiffuseMap", assetManager.loadTexture(knifeWMatTextureKey));
@@ -816,7 +816,7 @@ public class Main extends SimpleApplication {
         cutEnemy.scale(2);
         guiNode.attachChild(cutEnemy);
         
-        spellcardBannerModel = assetManager.loadModel("Models/game/spellcardBanner.mesh.xml");
+        spellcardBannerModel = assetManager.loadModel("Models/game/spellcardBanner.j3o");
         spellcardBanner = new GameObject("spellcardBanner");
         spellcardBannerMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         Texture spellcardBannerTex = assetManager.loadTexture(new TextureKey("Textures/game/text/stage1.png"));
@@ -900,7 +900,7 @@ public class Main extends SimpleApplication {
         //SET UP SKYSPHERE
 
         skySphere = new GameObject("skySphere");
-        skySphereModel = assetManager.loadModel("Models/game/skySphere.mesh.xml");
+        skySphereModel = assetManager.loadModel("Models/game/skySphere.j3o");
         skySphereMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         skySphere.setMaterial(skySphereMat);
         skySphere.attachChild(skySphereModel);
@@ -944,17 +944,17 @@ public class Main extends SimpleApplication {
 
         //Set up pause menu.
         gameMenu = new MenuNode("gameMenu");
-        pause = assetManager.loadModel("Models/game/pause.mesh.xml");
+        pause = assetManager.loadModel("Models/game/pause.j3o");
         pause.setName("pause");
-        gameOver = assetManager.loadModel("Models/game/gameover.mesh.xml");
+        gameOver = assetManager.loadModel("Models/game/gameover.j3o");
         gameOver.setName("gameOver");
-        gameMenuBack = assetManager.loadModel("Models/game/pauseBack.mesh.xml");
+        gameMenuBack = assetManager.loadModel("Models/game/pauseBack.j3o");
         gameMenuBack.setName("gameMenuBack");
-        retryButton = assetManager.loadModel("Models/game/retryButton.mesh.xml");
+        retryButton = assetManager.loadModel("Models/game/retryButton.j3o");
         retryButton.setName("retryButton");
-        continueButton = assetManager.loadModel("Models/game/continueButton.mesh.xml");
+        continueButton = assetManager.loadModel("Models/game/continueButton.j3o");
         continueButton.setName("continueButton");
-        returnButton = assetManager.loadModel("Models/game/returnButton.mesh.xml");
+        returnButton = assetManager.loadModel("Models/game/returnButton.j3o");
         returnButton.setName("returnButton");
         gameMenu.attachChild(gameMenuBack);
         gameMenu.attachChild(pause);
@@ -1008,7 +1008,7 @@ public class Main extends SimpleApplication {
         guiNode.attachChild(portraitEnemy);
 
         dialoguePane = new PanelNode("dialoguePane");
-        dialoguePaneModel = assetManager.loadModel("Models/game/dialogPane.mesh.xml");
+        dialoguePaneModel = assetManager.loadModel("Models/game/dialogPane.j3o");
         dialoguePaneMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         dialoguePaneMat.setTexture("m_ColorMap", assetManager.loadTexture("Models/game/pauseMenu.png"));
         dialoguePaneMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
@@ -1190,7 +1190,7 @@ public class Main extends SimpleApplication {
 
     private void createMoon() {
         moon = new GameObject("moon");
-        moonModel = assetManager.loadModel("Models/game/moon.mesh.xml");
+        moonModel = assetManager.loadModel("Models/game/moon.j3o");
         moon.attachChild(moonModel);
         moonMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         moonMat.setTexture("m_DiffuseMap", assetManager.loadTexture("Textures/game/MoonTM0360.jpg"));
@@ -1211,9 +1211,9 @@ public class Main extends SimpleApplication {
         ground2.move(0, offset + 930, 0);
         ground3.move(0, offset + 1860, 0);
 
-        groundModel1 = assetManager.loadModel("Models/game/ground.mesh.xml");
-        groundModel2 = assetManager.loadModel("Models/game/ground.mesh.xml");
-        groundModel3 = assetManager.loadModel("Models/game/ground.mesh.xml");
+        groundModel1 = assetManager.loadModel("Models/game/ground.j3o");
+        groundModel2 = assetManager.loadModel("Models/game/ground.j3o");
+        groundModel3 = assetManager.loadModel("Models/game/ground.j3o");
 
         //Adjust Ground position
         groundModel1.rotateUpTo(Vector3f.UNIT_Z);
@@ -1838,7 +1838,7 @@ public class Main extends SimpleApplication {
     //UTILITY METHODS
     //----------------------------------------------------------------------------------
     public void setUpPlayer() {
-        playerModel = (Spatial) assetManager.loadModel("Models/game/player.mesh.xml");
+        playerModel = (Spatial) assetManager.loadModel("Models/game/player.j3o");
         playerMat = new Material(assetManager, "Materials/Unshaded.j3md");
         playerMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/moko.png",false)));
         playerModel.setMaterial(playerMat);
@@ -1877,7 +1877,7 @@ public class Main extends SimpleApplication {
     }
     
     public void setUpEnemy() {
-        enemyModel = assetManager.loadModel("Models/game/enemy.mesh.xml");
+        enemyModel = assetManager.loadModel("Models/game/enemy.j3o");
         enemyMat = new Material(assetManager, "Materials/Unshaded.j3md");
         enemyMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/hada01.png", false)));
         enemy.attachChild(enemyModel);
@@ -1986,7 +1986,8 @@ public class Main extends SimpleApplication {
         enemyAnimChan.setSpeed(0.5f);
 
         //CREATE PLAYER HITBOX
-        hitboxModel = assetManager.loadModel("Models/game/hitbox.mesh.xml");
+        /*
+        hitboxModel = assetManager.loadModel("Models/game/hitbox.j3o");
         hitbox = new GameObject("hitbox");
         hitboxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         hitboxMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/transp.png"));
@@ -1997,7 +1998,8 @@ public class Main extends SimpleApplication {
         player.attachChild(hitbox);
 
         //CREATE PLAYER GRAZE BOX
-        grazeboxModel =assetManager.loadModel("Models/game/grazebox.mesh.xml");
+        
+        grazeboxModel =assetManager.loadModel("Models/game/grazebox.j3o");
         grazebox = new GameObject("grazebox");
         grazeboxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         grazeboxMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/transp.png"));
@@ -2007,13 +2009,14 @@ public class Main extends SimpleApplication {
         grazebox.attachChild(grazeboxModel);
         grazebox.setCullHint(Spatial.CullHint.Always);
         grazeboxModel.scale(2);
-        player.attachChild(grazebox);
+        player.attachChild(grazebox);*/
 
         objectNode.attachChild(player);
         player.lookAt(enemy.getPos(),Vector3f.UNIT_Z.mult(-1));
         player.rotate(3.14f,0,0);
         //CREATE ENEMY HIT BOX
-        //hitboxModel = assetManager.loadModel("Models/game/hitbox.mesh.xml");
+        //hitboxModel = assetManager.loadModel("Models/game/hitbox.j3o");
+        /*
         enemyHitbox = new GameObject("enemyHitbox");
 
         enemyHitboxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
@@ -2023,7 +2026,7 @@ public class Main extends SimpleApplication {
         enemyHitbox.setMaterial(enemyHitboxMat);
         enemyHitbox.attachChild(hitboxModel.clone());
         enemy.attachChild(enemyHitbox);
-
+        */
         objectNode.attachChild(enemy);
         enemy.setLocalTranslation(20,-60,0);
         enemy.moveTo(new Vector3f(0,0,0), 1f);
@@ -2085,7 +2088,7 @@ public class Main extends SimpleApplication {
             dialogueFlag[4] = true;
         }
         if(timer[T_EVENT_TIME] > 4 && !gameFlag[STAGE1_1]) {
-            stage1spellL(tpf);
+            stage1spell1(tpf);
             //stage2spell2(tpf);
             //stage2spell1(tpf);
         }
@@ -2497,7 +2500,7 @@ public class Main extends SimpleApplication {
             System.out.println("Stage 1 Spell 1");
 
             spellCircle = new PanelNode("spellCircle");
-            spellCircleModel = assetManager.loadModel("Models/game/spellCircle.mesh.xml");
+            spellCircleModel = assetManager.loadModel("Models/game/spellCircle.j3o");
             spellCircleMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
             TextureKey spellCircleMatTextureKey = new TextureKey("Textures/game/spellCircle1.png", false);
             Texture spellCircleMatTex = assetManager.loadTexture(spellCircleMatTextureKey);
@@ -2521,7 +2524,7 @@ public class Main extends SimpleApplication {
         //Create Hakurei Border square
         if(!squareCreated) {
             reimuSquare = new BulletModifier("ReimuSquare");
-            squareModel = assetManager.loadModel("/Models/game/field2.mesh.xml");
+            squareModel = assetManager.loadModel("/Models/game/field2.j3o");
             reimuSquareMat = new Material(assetManager, "MatDefs/scrollShader.j3md");
             squareTexture = assetManager.loadTexture("Textures/game/field2.png");
             reimuSquareMat.setTexture("m_ColorMap", squareTexture);
@@ -3047,7 +3050,7 @@ public class Main extends SimpleApplication {
             portraitEnemyMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/enemyPortrait2.png"));
             cutEnemyMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/enemyPortrait2.png"));
             cutEnemyMat.setColor("m_Color", new ColorRGBA(1, 1, 1, cutEnemyAlpha));
-            enemyModel = assetManager.loadModel("Models/game/alice.mesh.xml");
+            enemyModel = assetManager.loadModel("Models/game/alice.j3o");
             enemyMat = new Material(assetManager, "Materials/Unshaded.j3md");
             enemyMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/alice.png", false)));
             enemy.attachChild(enemyModel);
@@ -3701,7 +3704,7 @@ public class Main extends SimpleApplication {
                 spellCircle.detachAllChildren();
             }
             spellCircle = new PanelNode("spellCircle");
-            spellCircleModel = assetManager.loadModel("Models/game/spellCircle.mesh.xml");
+            spellCircleModel = assetManager.loadModel("Models/game/spellCircle.j3o");
             spellCircleMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
             TextureKey spellCircleMatTextureKey = new TextureKey("Textures/game/spellCircle"+stageNum+".png", false);
             Texture spellCircleMatTex = assetManager.loadTexture(spellCircleMatTextureKey);
@@ -4008,7 +4011,7 @@ public class Main extends SimpleApplication {
             portraitEnemyMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/enemyPortrait2.png"));
             cutEnemyMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/enemyPortrait2.png"));
             cutEnemyMat.setColor("m_Color", new ColorRGBA(1, 1, 1, cutEnemyAlpha));
-            enemyModel = assetManager.loadModel("Models/game/sakuya.mesh.xml");
+            enemyModel = assetManager.loadModel("Models/game/sakuya.j3o");
             enemyMat = new Material(assetManager, "Materials/Unshaded.j3md");
             enemyMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/alice.png", false)));
             enemy.attachChild(enemyModel);
@@ -4372,7 +4375,7 @@ public class Main extends SimpleApplication {
             portraitEnemyMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/enemyPortrait2.png"));
             cutEnemyMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/enemyPortrait2.png"));
             cutEnemyMat.setColor("m_Color", new ColorRGBA(1, 1, 1, cutEnemyAlpha));
-            enemyModel = assetManager.loadModel("Models/game/sakuya.mesh.xml");
+            enemyModel = assetManager.loadModel("Models/game/sakuya.j3o");
             enemyMat = new Material(assetManager, "Materials/Unshaded.j3md");
             enemyMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/sakuya.png", false)));
             enemy.attachChild(enemyModel);

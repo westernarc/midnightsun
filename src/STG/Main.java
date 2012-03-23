@@ -288,7 +288,7 @@ public class Main extends SimpleApplication {
     Spatial enemyModel;
     Material enemyMat;
 
-
+    //Pause Menu assets
     Material gameMenuMat;
     Spatial gameMenuBack;
     Spatial pause;
@@ -296,7 +296,27 @@ public class Main extends SimpleApplication {
     Spatial continueButton;
     Spatial retryButton;
     Spatial returnButton;
-
+    
+    GuiImage menuPause;
+    Box menuPauseModel;
+    Material menuPauseMat;
+    
+    GuiImage menuGameOver;
+    Box menuGameOverModel;
+    Material menuGameOverMat;
+    
+    GuiImage menuContinue;
+    Box menuContinueModel;
+    Material menuContinueMat;
+    
+    GuiImage menuRetry;
+    Box menuRetryModel;
+    Material menuRetryMat;
+    
+    GuiImage menuReturn;
+    Box menuReturnModel;
+    Material menuReturnMat;
+    
     //Bullets
     Spatial talismanW;
     Material talismanWMat;
@@ -462,7 +482,7 @@ public class Main extends SimpleApplication {
         Logger.getLogger("com.jme3").setLevel(Level.SEVERE);
         settings.put("Width", app.screenWidth);
         settings.put("Height", app.screenHeight);
-        settings.put("Title", "東方永夜抄反対");
+        settings.put("Title", "midnight sun v0.1");
         app.setSettings(settings);
         app.start();
     }
@@ -627,6 +647,7 @@ public class Main extends SimpleApplication {
         instructionsPanelModel = assetManager.loadModel("Models/gameStart/logo.j3o");
         instructionsPanelMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         instructionsPanelMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Models/gameStart/logo.png",false)));
+        instructionsPanelMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
 
         instructionsPanelModel.setMaterial(instructionsPanelMat);
         instructionsPanel.attachChild(instructionsPanelModel);
@@ -898,14 +919,14 @@ public class Main extends SimpleApplication {
         //  state -> bullets -> bullet -> assets
         //Used for setting up the game's 'stage'.
         //SET UP SKYSPHERE
-
+        /*
         skySphere = new GameObject("skySphere");
         skySphereModel = assetManager.loadModel("Models/game/skySphere.j3o");
         skySphereMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         skySphere.setMaterial(skySphereMat);
         skySphere.attachChild(skySphereModel);
         backNode.attachChild(skySphere);
-
+         */
         //SET UP MOON
         createMoon();
 
@@ -956,12 +977,59 @@ public class Main extends SimpleApplication {
         continueButton.setName("continueButton");
         returnButton = assetManager.loadModel("Models/game/returnButton.j3o");
         returnButton.setName("returnButton");
+        
+        menuPauseModel = new Box(64,14,0.5f);
+        menuPause = new GuiImage("menuPause",menuPauseModel);
+        menuPause.move(356,380,0);
+        menuPauseMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
+        menuPauseMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/pause.png", true)));
+        menuPauseMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
+        menuPause.setMaterial(menuPauseMat);
+        //guiNode.attachChild(menuPause);
+        
+        menuGameOverModel = new Box(64,14,0.5f);
+        menuGameOver = new GuiImage("menuGameOver",menuGameOverModel);
+        menuGameOver.move(356,360,0);
+        menuGameOverMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
+        menuGameOverMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/gameover.png", true)));
+        menuGameOverMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
+        menuGameOver.setMaterial(menuGameOverMat);
+        //guiNode.attachChild(menuGameOver);
+        
+        menuRetryModel = new Box(64,14,0.5f);
+        menuRetry = new GuiImage("menuRetry",menuRetryModel);
+        menuRetry.move(356,340,0);
+        menuRetryMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
+        menuRetryMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/retry.png", true)));
+        menuRetryMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
+        menuRetry.setMaterial(menuRetryMat);
+        //guiNode.attachChild(menuRetry);
+        
+        menuContinueModel = new Box(64,14,0.5f);
+        menuContinue = new GuiImage("menuContinue",menuContinueModel);
+        menuContinue.move(356,320,0);
+        menuContinueMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
+        menuContinueMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/continue.png", true)));
+        menuContinueMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
+        menuContinue.setMaterial(menuContinueMat);
+        //guiNode.attachChild(menuContinue);
+        
+        menuReturnModel = new Box(64,14,0.5f);
+        menuReturn = new GuiImage("menuReturn",menuReturnModel);
+        menuReturn.move(356,300,0);
+        menuReturnMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
+        menuReturnMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/returntomenu.png", true)));
+        menuReturnMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
+        menuReturn.setMaterial(menuReturnMat);
+        //guiNode.attachChild(menuReturn);
+        
         gameMenu.attachChild(gameMenuBack);
         gameMenu.attachChild(pause);
         gameMenu.attachChild(retryButton);
         gameMenu.attachChild(continueButton);
         gameMenu.attachChild(returnButton);
 
+        
         //Pause menu materials, set for transparency.
         gameMenuMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         gameMenuMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Models/game/pauseMenu.png", false)));
@@ -2088,7 +2156,7 @@ public class Main extends SimpleApplication {
             dialogueFlag[4] = true;
         }
         if(timer[T_EVENT_TIME] > 4 && !gameFlag[STAGE1_1]) {
-            stage1spell1(tpf);
+            stage4spell1(tpf);
             //stage2spell2(tpf);
             //stage2spell1(tpf);
         }
@@ -4347,18 +4415,36 @@ public class Main extends SimpleApplication {
     }
     private void stage4spell1(float tpf){
         openSpell(4,1,5,250,tpf);
-        if(spellTimer[1] > 0.1) {
-            fireSpeedCircle(enemy.getPos(), 12, 1, spellTimer[T_SPELL_MAIN], 22,5,5, 1, KNIFE_K);
-            fireSpeedCircle(enemy.getPos(), 12, 1, -spellTimer[T_SPELL_MAIN], 22,5,5, 1, KNIFE_K);
+        if(spellFlag[3]) {
+            enemy.moveTo(60,0,0, 0.4f);
+        } else {
+            enemy.moveTo(-60,0,0,0.4f);
+        }
+        if(enemy.getPos().x > 37) {
+            spellFlag[3] = false;
+        } else if(enemy.getPos().x < -37) {
+            spellFlag[3] = true;
+        }
+        if(spellTimer[1] > 0.5) {
+            fireStraightCircle(enemy.getPos(), 32, 1, 0, 22, 1, KNIFE_K);
+            
+            for(int i = 0; i < 8; i++) {
+                fireStraightLine(enemy.getPos(), enemy.getPos().add(0,1,0),1,i*0.1f,30,2,BALLSHOT_W);
+                fireStraightLine(enemy.getPos(), enemy.getPos().add(0,1,0),1,-i*0.1f,30,2,BALLSHOT_W);
+            }
             spellTimer[1] = 0;
+        }
+        if(spellTimer[2] > 0.3) {
+            fireStraightShot(enemy.getPos(),player.getPos(),40,1,ARROWSHOT_G);
+            spellTimer[2] = 0;
         }
         closeSpell(STAGE4_1,60,150,tpf);
     }
     private void stage4spell2(float tpf){
         openSpell(4,2,5,250,tpf);
         if(spellTimer[1] > 0.1) {
-            fireSpeedCircle(enemy.getPos(), 12, 1, spellTimer[T_SPELL_MAIN], 22,5,5, 1, KNIFE_K);
-            fireSpeedCircle(enemy.getPos(), 12, 1, -spellTimer[T_SPELL_MAIN], 22,5,5, 1, KNIFE_K);
+            fireSpeedCircle(enemy.getPos(), 12, 1, spellTimer[T_SPELL_MAIN], 22,5,5,2, BALLSHOT_P);
+            fireSpeedCircle(enemy.getPos(), 12, 1, -spellTimer[T_SPELL_MAIN], 22,5,5, 2, BALLSHOT_P);
             spellTimer[1] = 0;
         }
         closeSpell(STAGE4_2,60,150,tpf);

@@ -1748,7 +1748,7 @@ public class Main extends SimpleApplication {
     }
 
     public void playerHit() {
-        //player.changeLife(-1);
+        player.changeLife(-1);
         System.out.println("LIFE: " + player.getLife());
     }
     public void updateGamePortraits(float tpf) {
@@ -2615,19 +2615,7 @@ public class Main extends SimpleApplication {
     boolean spellcard2_1, spellcard2_2, spellcard2_3, spellcard2_3_1, spellcard2_3_2, moved = false;
 
     private void stage1spell2(float tpf) {
-        bulletsCleared = false;
-
-        if(!cutEnemyDone) {
-            cutEnemy(tpf,1);
-            stage = 1;
-            spell = 2;
-            enemy.life = 250;
-        }
-        if(spellCircleAlpha < 1) {
-            spellCircleAlpha += tpf;
-            spellCircleMat.setColor("m_Color", new ColorRGBA(1,1,1, spellCircleAlpha));
-        }
-        spellCircle.rotate(0,0,tpf * 3);
+        openSpell(1,2,10,250, tpf);
         //Move around a bit.
         if(spellTimer[1] > 0 && !moved) {
             enemy.moveTo(new Vector3f(FastMath.nextRandomFloat()*10,FastMath.nextRandomFloat()*10,0f),0.1f);
@@ -2679,21 +2667,7 @@ public class Main extends SimpleApplication {
             spellcard2_3_1 = false;
             spellcard2_3_2 = false;
         }
-        if((spellTimer[0] > spellcard2Length || enemy.life < 190) && !bulletsCleared) {  //Clean up spellcard
-            resetCardVars();
-            spellcardActive = false;
-            fadeBullets(tpf);
-            if(bulletFade <= 0) {
-                spellCircleAlpha = 0;
-                spellCircleMat.setColor("m_Color", new ColorRGBA(1,1,1, spellCircleAlpha));
-                bulletFade = 1;
-                bulletsCleared = true;
-                clearBullets();
-                cutEnemyDone = false;
-                gameFlag[STAGE1_2] = true;
-                bulletLight.setColor(new ColorRGBA(1, 1, 1, 1));
-            }
-        }
+        closeSpell(STAGE1_2, 60, 150, tpf);
     }
 
     boolean spellcard3_1,spellcard3_1_2, spellcard3_1_3,spellcard3_2, spellcard3_3, unMoved;
@@ -2712,22 +2686,7 @@ public class Main extends SimpleApplication {
     }
 
     private void stage1spell3(float tpf) {
-        spellcardActive = true;
-        if(!cutEnemyDone) {
-            cutEnemy(tpf,1);
-            stage = 1;
-            spell = 3;
-            enemy.life = 200;
-        }
-        if(spellCircleAlpha < 1) {
-            spellCircleAlpha += tpf;
-            spellCircleMat.setColor("m_Color", new ColorRGBA(1,1,1, spellCircleAlpha));
-        }
-        updateSpellTimer(tpf, 4);
-        if(!spellFlag[3]) {
-            System.out.println("Stage 1 Spell 3");
-            spellFlag[3] = true;
-        }
+        openSpell(1,3,10, 250,tpf);
         if(!spellCircleCreated) {
             spellCircleMat.setColor("m_Color", new ColorRGBA(1,1,1, spellCircleAlpha));
             spellCircleCreated = true;
@@ -2777,17 +2736,7 @@ public class Main extends SimpleApplication {
             spellcard3_1_2 = false;
             spellcard3_1_3 = false;
         }
-        if(spellTimer[0] > 30 || enemy.life < 130) {
-            spellCircleAlpha = 0;
-            spellCircleMat.setColor("m_Color", new ColorRGBA(1,1,1, spellCircleAlpha));
-            clearBullets();
-            cutEnemyDone = false;
-            gameFlag[STAGE1_3] = true;
-            //resetCardVars();
-            spellcardActive = false;
-            spellCircleCreated = false;
-            bulletLight.setColor(new ColorRGBA(1, 1, 1, 1));
-        }
+        closeSpell(STAGE1_3,60,150,tpf);
     }
 
     boolean bulletLightSet = false;
@@ -3369,7 +3318,13 @@ public class Main extends SimpleApplication {
     public void closeSpell(int spell, int timeLimit, int lifeLimit,float tpf) {
         if((spellTimer[T_SPELL_MAIN] > timeLimit || enemy.life < lifeLimit) && !bulletsCleared){
             fadeBullets(tpf);
+            bulletNode.scale(1-tpf);
+            if(spellCircleAlpha > 0) {
+                spellCircleAlpha -= tpf;
+                spellCircleMat.setColor("m_Color", new ColorRGBA(1,1,1, spellCircleAlpha));
+            }
             if(bulletFade <= 0) {
+                bulletNode.setLocalScale(1);
                 clearBullets();
                 bulletFade = 1;
                 cutEnemyAlpha = 0;
@@ -4060,6 +4015,7 @@ public class Main extends SimpleApplication {
         updateSpellTimer(tpf, vars);
         
         if(!spellFlag[0]) {
+            bulletNode.setLocalScale(1);
             System.out.println("Stage "+stage+" Spell "+spell);
             this.stage = stage;
             this.spell = spell;
@@ -5069,6 +5025,8 @@ public class Main extends SimpleApplication {
                             } else {
                                 pauseGame();
                             }
+                            player.setLife(100);
+                            graze = 0;
                             break;
                         case GAMEMENU_RETRY://IMPLEMENT
                             break;

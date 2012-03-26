@@ -125,6 +125,7 @@ public class Main extends SimpleApplication {
     //  Main Menu
     PanelNode titlePanel;
     GameObject titleBackground;
+    Node titleUIElements;
     //  Game Start
     PanelNode instructionsPanel;
 
@@ -146,11 +147,9 @@ public class Main extends SimpleApplication {
     int mainMenuSize = 1; //Index of last item in menu
     final int MAINMENU_START = 0; //int codes for each button
     final int MAINMENU_EXIT = 1;
-    float buttonIndentation = 0.5f;
-    float startButtonIndent = 0f;
-    float exitButtonIndent = 0f;
     int currMainMenuItem = 0;
     float buttonStep = 0.1f;
+    int mainMenuActiveItem = 0; //0: nothing, 1: start, 2: exit
     //Main menu background
     Texture[] mainMenuFrame;
     int mainMenuFrames = 26;
@@ -162,7 +161,7 @@ public class Main extends SimpleApplication {
     int currentGameState;  //Current game state, out of 5 possible states.
     boolean advanceEventTime;   //Event line paused
     boolean spellcardActive;    //Stores whether a spellcard is active
-    boolean debug = false; //skips to game
+    boolean debug = true; //skips to game
     boolean gamePause = false;      //Stores whether game paused
     boolean gameOverFlag = false;   //Stores whether game over
     boolean gameMenuActive = false; //In game menu is active
@@ -266,7 +265,11 @@ public class Main extends SimpleApplication {
     Spatial exitButtonModel;
     Material exitButtonMat;
 
-    float titleAlpha = 0;
+    float[] titleAlpha;
+    //1: main title
+    //2: start
+    //3: exit
+    
     //  Game Start
     Spatial instructionsPanelModel;
     Material instructionsPanelMat;
@@ -297,6 +300,8 @@ public class Main extends SimpleApplication {
     Spatial retryButton;
     Spatial returnButton;
     
+    float[] menuAlpha = new float[9];
+    //1: pause 2: gameover 3: continue 4: retry 5: return
     GuiImage menuPause;
     Box menuPauseModel;
     Material menuPauseMat;
@@ -552,11 +557,13 @@ public class Main extends SimpleApplication {
         //  root>state>button>spatial
         //  root>state>button>spatial
         //  root>state>background>spatial
+
         System.out.println("initializing state " + currentGameState);
         rootNode.detachAllChildren();
         cam.setLocation(new Vector3f(0f,0f,15f));
         cam.lookAt(new Vector3f(0f,0f,0f), Vector3f.UNIT_Z);
         mainMenuState = new StateNode("mainMenuNode");
+        titleAlpha = new float[9];
 
         titleBackground = new PanelNode("titleBackgroundPanel");
         titleBackgroundModel = assetManager.loadModel("Models/mainMenu/movie.j3o");
@@ -565,7 +572,7 @@ public class Main extends SimpleApplication {
         //titleBackgroundMat.getAdditionalRenderState().setBlendMode(BlendMode.Off);
         titleBackgroundMat.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
         titleBackground.move(0,0,-8f);
-        Node titleUIElements = new Node("titleUIElements");
+        titleUIElements = new Node("titleUIElements");
         titleUIElements.move(0,-2,0);
         titleBackground.attachChild(titleBackgroundModel);
         titleBackground.setMaterial(titleBackgroundMat);
@@ -580,7 +587,7 @@ public class Main extends SimpleApplication {
         Texture titlePanelMatTex = assetManager.loadTexture(titlePanelMatTextureKey);
         titlePanelMat.setTexture("m_ColorMap", titlePanelMatTex);
         titlePanelMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
-        titlePanelMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha));
+        titlePanelMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha[0]));
         titlePanel.move(-0.5f,0,0);
 
         titlePanelModel.setMaterial(titlePanelMat);
@@ -589,23 +596,23 @@ public class Main extends SimpleApplication {
 
         startButton = new ButtonNode("startButton");
         startButtonModel = assetManager.loadModel("Models/mainMenu/startButton.j3o");
-        startButton.move(0,2,0);
+        startButton.move(-0.5f,2,0);
         startButtonMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         startButtonMat.setTexture("m_ColorMap", titlePanelMatTex);
         startButtonMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
-        startButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha));
+        startButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha[1]));
 
         startButtonModel.setMaterial(startButtonMat);
         startButton.attachChild(startButtonModel);
         titleUIElements.attachChild(startButton);
 
         exitButton = new ButtonNode("exitButton");
-        exitButton.move(0,3,0);
+        exitButton.move(-0.5f,3,0);
         exitButtonModel = assetManager.loadModel("Models/mainMenu/exitButton.j3o");
         exitButtonMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         exitButtonMat.setTexture("m_ColorMap", titlePanelMatTex);
         exitButtonMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
-        exitButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha));
+        exitButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha[2]));
 
         exitButtonModel.setMaterial(exitButtonMat);
         exitButton.attachChild(exitButtonModel);
@@ -978,56 +985,68 @@ public class Main extends SimpleApplication {
         returnButton = assetManager.loadModel("Models/game/returnButton.j3o");
         returnButton.setName("returnButton");
         
+        for(int i = 0; i < 9; i++) {
+            if(menuAlpha[i] < 0) {
+                menuAlpha[i] = 0;
+            }
+        }
+        
         menuPauseModel = new Box(64,14,0.5f);
         menuPause = new GuiImage("menuPause",menuPauseModel);
-        menuPause.move(356,380,0);
+        menuPause.move(screenWidth/2,390,20);
+        menuPause.scale(1.5f);
         menuPauseMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         menuPauseMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/pause.png", true)));
+        menuPauseMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[1]));
         menuPauseMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
         menuPause.setMaterial(menuPauseMat);
-        //guiNode.attachChild(menuPause);
+        guiNode.attachChild(menuPause);
         
         menuGameOverModel = new Box(64,14,0.5f);
         menuGameOver = new GuiImage("menuGameOver",menuGameOverModel);
-        menuGameOver.move(356,360,0);
+        menuGameOver.move(screenWidth/2,360,20);
         menuGameOverMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         menuGameOverMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/gameover.png", true)));
+        menuGameOverMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[2]));
         menuGameOverMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
         menuGameOver.setMaterial(menuGameOverMat);
-        //guiNode.attachChild(menuGameOver);
+        guiNode.attachChild(menuGameOver);
         
         menuRetryModel = new Box(64,14,0.5f);
         menuRetry = new GuiImage("menuRetry",menuRetryModel);
-        menuRetry.move(356,340,0);
+        menuRetry.move(screenWidth/2,340,20);
         menuRetryMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         menuRetryMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/retry.png", true)));
+        menuRetryMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[3]));
         menuRetryMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
         menuRetry.setMaterial(menuRetryMat);
-        //guiNode.attachChild(menuRetry);
+        guiNode.attachChild(menuRetry);
         
         menuContinueModel = new Box(64,14,0.5f);
         menuContinue = new GuiImage("menuContinue",menuContinueModel);
-        menuContinue.move(356,320,0);
+        menuContinue.move(screenWidth/2,320,20);
         menuContinueMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         menuContinueMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/continue.png", true)));
+        menuContinueMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[4]));
         menuContinueMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
         menuContinue.setMaterial(menuContinueMat);
-        //guiNode.attachChild(menuContinue);
+        guiNode.attachChild(menuContinue);
         
         menuReturnModel = new Box(64,14,0.5f);
         menuReturn = new GuiImage("menuReturn",menuReturnModel);
-        menuReturn.move(356,300,0);
+        menuReturn.move(screenWidth/2,300,20);
         menuReturnMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         menuReturnMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/returntomenu.png", true)));
+        menuReturnMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[5]));
         menuReturnMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
         menuReturn.setMaterial(menuReturnMat);
-        //guiNode.attachChild(menuReturn);
-        
+        guiNode.attachChild(menuReturn);
+        /*
         gameMenu.attachChild(gameMenuBack);
         gameMenu.attachChild(pause);
         gameMenu.attachChild(retryButton);
         gameMenu.attachChild(continueButton);
-        gameMenu.attachChild(returnButton);
+        gameMenu.attachChild(returnButton);*/
 
         
         //Pause menu materials, set for transparency.
@@ -1527,10 +1546,17 @@ public class Main extends SimpleApplication {
             //Update code for opening splash.
     }
 
-    boolean titleEnterDone = false;
+    boolean updateMainMenuFlags[];
+    //scrolling: 0: title, 1: start, 2: end
     public void updateMainMenu(float tpf) {
         timer[T_MAINMENU_TIME] += tpf;
-
+        if(timer[T_MAINMENU_TIME] < 1.4f) {
+            updateMainMenuFlags = new boolean[9];
+            for(int i = 0; i < 9; i++) {
+                updateMainMenuFlags[i] = false;
+            }
+        }
+        handleMainMenuMouse(tpf);
         mainMenuTime += tpf;
         if(mainMenuTime > mainMenuFrameRate) {
             titleBackgroundMat.setTexture("m_ColorMap", mainMenuFrame[mainMenuCurFrame]);
@@ -1540,45 +1566,37 @@ public class Main extends SimpleApplication {
             }
             mainMenuTime = 0;
         }
-
-        if(timer[T_MAINMENU_TIME] > 1.4 && !titleEnterDone) {
-            if(titlePanel.getX() < 0) {
-                titlePanelMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha));
+        if(timer[T_MAINMENU_TIME] > 1.4 && !updateMainMenuFlags[0]) {
+            if(titlePanel.getLocalTranslation().x < 0) {
                 titlePanel.move(tpf * 3f,0,0);
-                titleAlpha += 6f * tpf;
-                startButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha));
-                exitButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha));
+                titleAlpha[0] += 6f * tpf;
+                titlePanelMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha[0]));
             } else {
-                titleEnterDone = true;
+                updateMainMenuFlags[0] = true;
             }
-
         }
-        //BUTTON SCROLL CODE
-        //Reset button positions
-        if(currMainMenuItem != MAINMENU_START && startButtonIndent > 0) {
-            startButton.move(-buttonStep,0,0);
-            startButtonIndent -= buttonStep;
-        }
-        if(currMainMenuItem != MAINMENU_EXIT && exitButtonIndent > 0) {
-            exitButton.move(-buttonStep,0,0);
-            exitButtonIndent -= buttonStep;
-        }
-        //Indent whichever button is the current button
-        switch(currMainMenuItem) {
-            case 0:
-                if(startButtonIndent < buttonIndentation) {
-                    startButton.move(buttonStep,0,0);
-                    startButtonIndent += buttonStep;
+        if(timer[T_MAINMENU_TIME] > 1.5 && !updateMainMenuFlags[1]) {
+            if(startButton.getLocalTranslation().x < 0) {
+                startButton.move(tpf * 3f,0,0);
+                if(titleAlpha[1] < 0.6) {
+                    titleAlpha[1] += 4f * tpf;
+                    startButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha[1]));
                 }
-                break;
-            case 1:
-                if(exitButtonIndent < buttonIndentation) {
-                    exitButton.move(buttonStep,0,0);
-                    exitButtonIndent += buttonStep;
-                }
-                break;
+            } else {
+                updateMainMenuFlags[1] = true;
+            }
         }
-        //BUTTON SCROLL CODE END
+        if(timer[T_MAINMENU_TIME] > 1.6 && !updateMainMenuFlags[2]) {
+            if(exitButton.getLocalTranslation().x < 0) {
+                exitButton.move(tpf * 3f,0,0);
+                if(titleAlpha[2] < 0.6) {
+                    titleAlpha[2] += 4f * tpf;
+                    exitButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha[2]));
+                }
+            } else {
+                updateMainMenuFlags[2] = true;
+            }
+        }
     }
     public void updateGameStart(float tpf) {
         loadTime += tpf;
@@ -1599,7 +1617,7 @@ public class Main extends SimpleApplication {
             cam.lookAt(camFocalPoint.getLocalTranslation(), Vector3f.UNIT_Z);
             //cam.lookAt(new Vector3f(cam.getLocation().x, cam.getLocation().y - 0.2f, -1), Vector3f.UNIT_Z);
         }
-        handleMouse();
+        handleGameMouse();
         playerLoc.set(gameMouseLoc.x,gameMouseLoc.y,0);
         if(playerLoc.x > playerMaxSide) {
            playerLoc.setX(playerMaxSide);
@@ -4591,6 +4609,7 @@ public class Main extends SimpleApplication {
         if(screenFadeOverlayAlpha < 0.9 && !gameFaded) {
             screenFadeOverlayAlpha += tpf;
             screenFadeOverlayMat.setColor("m_Color", new ColorRGBA(0,0,0,screenFadeOverlayAlpha));
+            fadePauseMenuIn(tpf);
         }
         if(screenFadeOverlayAlpha >= 0.9) {
             screenFadeOverlayAlpha = 0.9f;
@@ -4602,6 +4621,7 @@ public class Main extends SimpleApplication {
         if(screenFadeOverlayAlpha > 0 && !gameUnfaded) {
             screenFadeOverlayAlpha -= tpf;
             screenFadeOverlayMat.setColor("m_Color", new ColorRGBA(0,0,0,screenFadeOverlayAlpha));
+            fadePauseMenuOut(tpf);
         }
         if(screenFadeOverlayAlpha <= 0) {
             screenFadeOverlayAlpha = 0;
@@ -4950,7 +4970,6 @@ public class Main extends SimpleApplication {
                 //Perform main menu action depending on active button
                 switch(currMainMenuItem) {
                     case MAINMENU_START:
-                        startButtonIndent = 0;
                         mainMenuState.complete();
                         System.out.println("Advancing to state " + (currentGameState + 1));
                         inputManager.deleteMapping("select");
@@ -5195,7 +5214,51 @@ public class Main extends SimpleApplication {
         mark_mat.setColor("m_Color", ColorRGBA.Red);
         mark.setMaterial(mark_mat);
     }
-    public void handleMouse() {
+    
+    public void handleMainMenuMouse(float tpf) {
+        Vector3f origin    = cam.getWorldCoordinates(inputManager.getCursorPosition(), 0.0f);
+        Vector3f direction = cam.getWorldCoordinates(inputManager.getCursorPosition(), 0.3f);
+        direction.subtractLocal(origin).normalizeLocal();
+        String activeItem = new String();
+        Ray ray = new Ray(origin, direction);
+        CollisionResults results = new CollisionResults();
+        titleUIElements.collideWith(ray, results);
+
+        if (results.size() > 0) {
+            CollisionResult closest = results.getClosestCollision();
+            Quaternion q = new Quaternion();
+            q.lookAt(closest.getContactNormal(), Vector3f.UNIT_Y);
+            activeItem = closest.getGeometry().toString();
+        } else {
+            activeItem = new String();
+            mainMenuActiveItem = 0;
+        }
+        if(activeItem.contains("start")) {
+            mainMenuActiveItem = 1;
+            if(titleAlpha[1] < 1) {
+                titleAlpha[1] += 3*tpf;
+                startButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha[1]));
+            }
+        } else {
+            if(titleAlpha[1] > 0.6) {
+                titleAlpha[1] -= 3*tpf;
+                startButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha[1]));
+            }
+        }
+        if(activeItem.contains("exit")) {
+            mainMenuActiveItem = 2;
+            if(titleAlpha[2] < 0.8) {
+                titleAlpha[2] += 3*tpf;
+                exitButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha[2]));
+            }
+        } else {
+            if(titleAlpha[2] > 0.6) {
+                titleAlpha[2] -= 3*tpf;
+                exitButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha[2]));
+            }
+        }
+    }
+    public void handleGameMouse() {
         Vector3f origin    = cam.getWorldCoordinates(inputManager.getCursorPosition(), 0.0f);
         Vector3f direction = cam.getWorldCoordinates(inputManager.getCursorPosition(), 0.3f);
         direction.subtractLocal(origin).normalizeLocal();
@@ -5225,5 +5288,52 @@ public class Main extends SimpleApplication {
         } else {
             rootNode.detachChild(mark);
         }
+    }
+    
+    private void fadePauseMenuIn(float tpf) {
+            menuAlpha[1] += tpf*1;
+            menuAlpha[2] += tpf*1.5;
+            menuAlpha[3] += tpf*2;
+            menuAlpha[4] += tpf*2.5;
+            menuAlpha[5] += tpf*3;
+            for(int i = 0; i < 9; i++) {
+                if(menuAlpha[i] > 1) {
+                    menuAlpha[i] = 1;
+                }
+            }
+            //1: pause 2: gameover 3: continue 4: retry 5: return
+            menuPauseMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[1]));
+            menuPause.setMaterial(menuPauseMat);
+            menuGameOverMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[2]));
+            menuGameOver.setMaterial(menuGameOverMat);
+            menuContinueMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[3]));
+            menuContinue.setMaterial(menuContinueMat);
+            menuRetryMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[4]));
+            menuRetry.setMaterial(menuRetryMat);
+            menuReturnMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[5]));
+            menuReturn.setMaterial(menuReturnMat);
+    }
+    private void fadePauseMenuOut(float tpf){
+        menuAlpha[1] -= tpf*1;
+        menuAlpha[2] -= tpf*1.5;
+        menuAlpha[3] -= tpf*2;
+        menuAlpha[4] -= tpf*2.5;
+        menuAlpha[5] -= tpf*3;
+        for(int i = 0; i < 9; i++) {
+            if(menuAlpha[i] < 0) {
+                menuAlpha[i] = 0;
+            }
+        }
+        //1: pause 2: gameover 3: continue 4: retry 5: return
+        menuPauseMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[1]));
+        menuPause.setMaterial(menuPauseMat);
+        menuGameOverMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[2]));
+        menuGameOver.setMaterial(menuGameOverMat);
+        menuContinueMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[3]));
+        menuContinue.setMaterial(menuContinueMat);
+        menuRetryMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[4]));
+        menuRetry.setMaterial(menuRetryMat);
+        menuReturnMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[5]));
+        menuReturn.setMaterial(menuReturnMat);
     }
 }

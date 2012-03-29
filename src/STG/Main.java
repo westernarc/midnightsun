@@ -474,6 +474,7 @@ public class Main extends SimpleApplication {
     DirectionalLight bulletLight;
 
     ParticleEmitter enemyDeathEmitter;
+    ParticleEmitter playerDeathEmitter;
     ParticleEmitter playerHeatEmitter;
     //---------------------------------------------------------
 
@@ -1760,7 +1761,7 @@ public class Main extends SimpleApplication {
                     //Use distances instead of hitboxes.
                     float dist = currBullet.getPos().distance(player.getPos());
                     if(dist < player.getGrazeSize()+currBullet.getHitSize()) {
-                        graze += tpf * 100;
+                        graze += tpf * 300;
                         if(dist < player.getHitSize() + currBullet.getHitSize()) {
                             bulletIterator.remove();
                             playerHit();
@@ -1835,6 +1836,8 @@ public class Main extends SimpleApplication {
 
     public void playerHit() {
         player.changeLife(-1);
+        heat -= 100;
+        playerDeathEmitter.emitAllParticles();
         System.out.println("LIFE: " + player.getLife());
     }
     public void updateGamePortraits(float tpf) {
@@ -1890,7 +1893,6 @@ public class Main extends SimpleApplication {
         }
         enemy.update(tpf);
         enemy.lookAt(player.getLocalTranslation(), Vector3f.UNIT_Z);
-        playerModel.lookAt(enemy.getLocalTranslation(), Vector3f.UNIT_Z);
     }
 
     public void updatePlayer(float tpf) {
@@ -1931,7 +1933,7 @@ public class Main extends SimpleApplication {
         player.attachChild(playerModel);
 
 
-        //player.scale(0.5f);
+        player.scale(2f);
         player.distance = 70;
         player.setLocalTranslation(0, player.distance, 0);
         player.angle = 0;
@@ -1960,6 +1962,34 @@ public class Main extends SimpleApplication {
         playerHeatEmitter.setVelocityVariation(0.5f);
         playerHeatEmitter.move(0,0,2);
         player.attachChild(playerHeatEmitter);
+        
+        playerDeathEmitter = new ParticleEmitter("playerDeathEmitter", ParticleMesh.Type.Triangle, 10);
+
+        Material deathParticle = new Material(assetManager, "Common/MatDefs/Misc/Particle.j3md");
+        //mat_red.setTexture("m_Texture", assetManager.loadTexture("Textures/game/spark.png"));
+        deathParticle.setTexture("m_Texture", assetManager.loadTexture("Textures/game/particle/leaf.png"));
+        deathParticle.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
+        playerDeathEmitter.setQueueBucket(Bucket.Translucent);
+        //Leaf explosion
+        playerDeathEmitter.setMaterial(deathParticle);
+        playerDeathEmitter.setNumParticles(100);
+        playerDeathEmitter.setImagesX(2); playerDeathEmitter.setImagesY(1); // 2x2 texture animation
+        playerDeathEmitter.setEndColor(new ColorRGBA(1f, 0f, 0f, 0.4f));   // red
+        playerDeathEmitter.setStartColor(new ColorRGBA(1f, 1f, 0f, 0.2f)); // yellow
+        playerDeathEmitter.getParticleInfluencer().setInitialVelocity(new Vector3f(60,0,0));
+        playerDeathEmitter.setGravity(0,0,20);
+        playerDeathEmitter.setRotateSpeed(10);
+        
+        playerDeathEmitter.setParticlesPerSec(0);
+        playerDeathEmitter.emitAllParticles();
+        playerDeathEmitter.getParticleInfluencer().setVelocityVariation(1);
+        playerDeathEmitter.setStartSize(4f);
+        playerDeathEmitter.setEndSize(0.2f);
+        playerDeathEmitter.setLowLife(0.1f);
+        playerDeathEmitter.setHighLife(0.4f);
+        //playerDeathEmitter.setVelocityVariation(0f);
+        playerDeathEmitter.move(0,0,0);
+        player.attachChild(playerDeathEmitter);
     }
     
     public void setUpEnemy() {
@@ -1968,7 +1998,7 @@ public class Main extends SimpleApplication {
         enemyMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/hada01.png", false)));
         enemy.attachChild(enemyModel);
         enemy.setMaterial(enemyMat);
-        //enemy.scale(0.5f);
+        enemy.scale(2f);
     }
     //----------------------------------------------------------------------------------
     //TIMELINE FLAGS
@@ -2098,8 +2128,8 @@ public class Main extends SimpleApplication {
         player.attachChild(grazebox);*/
 
         objectNode.attachChild(player);
-        player.lookAt(enemy.getPos(),Vector3f.UNIT_Z.mult(-1));
-        player.rotate(3.14f,0,0);
+        //player.lookAt(player.getPos(),Vector3f.UNIT_Z.mult(-1));
+        player.rotate(FastMath.HALF_PI,0,0);
         //CREATE ENEMY HIT BOX
         //hitboxModel = assetManager.loadModel("Models/game/hitbox.j3o");
         /*
@@ -2174,7 +2204,7 @@ public class Main extends SimpleApplication {
             dialogueFlag[4] = true;
         }
         if(timer[T_EVENT_TIME] > 4 && !gameFlag[STAGE1_1]) {
-            stage4spell1(tpf);
+            stage2spell1(tpf);
             //stage2spell2(tpf);
             //stage2spell1(tpf);
         }

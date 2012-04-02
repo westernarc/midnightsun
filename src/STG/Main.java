@@ -75,6 +75,7 @@ import java.util.logging.Logger;
 
 public class Main extends SimpleApplication {
     Geometry mark;
+    Geometry mark2;
     //CONSTANTS
     final int TALISMAN_R = 0;
     final int TALISMAN_B = 1;
@@ -132,6 +133,7 @@ public class Main extends SimpleApplication {
     //Filters
     BloomFilter bloomFilter;
     FadeFilter fadeFilter;
+    RadialBlurFilter radialBlur;
     LightScatteringFilter scatterFilter;
     FilterPostProcessor filtPostProc;
 
@@ -145,11 +147,11 @@ public class Main extends SimpleApplication {
 
     //Main menu variables
     int mainMenuSize = 1; //Index of last item in menu
+    final int MAINMENU_NULL = -1;
     final int MAINMENU_START = 0; //int codes for each button
     final int MAINMENU_EXIT = 1;
-    int currMainMenuItem = 0;
+    int curMainMenuItem = 0;
     float buttonStep = 0.1f;
-    int mainMenuActiveItem = 0; //0: nothing, 1: start, 2: exit
     //Main menu background
     Texture[] mainMenuFrame;
     int mainMenuFrames = 26;
@@ -195,8 +197,7 @@ public class Main extends SimpleApplication {
     int heatState = 0; //HEAT: 0, 1, 2, 3
     int heatMax = 2000;
     float heatLossRate = 50f;
-    float heatGainRate = 0.3f;
-    int score = 0;  //Score:  Gained by doing a lot of things.
+    float heatGainRate = 0.2f;
     int stage = 1;
     int spell = 1;
     
@@ -226,6 +227,7 @@ public class Main extends SimpleApplication {
 
     //Pause menu variables
     int pauseMenuSize = 2; //Index of last item in menu
+    final int GAMEMENU_NULL = -1;
     final int GAMEMENU_RETRY = 1; //int codes for each button
     final int GAMEMENU_CONTINUE = 0;
     final int GAMEMENU_RETURN = 2;
@@ -233,7 +235,9 @@ public class Main extends SimpleApplication {
     float pauseRetryIndent = 0f;
     float pauseContinueIndent = 0f;
     float pauseReturnIndent = 0f;
-    int currGameMenuItem = 0;
+    int curGameMenuItem = -1;
+    int continueCount = 0;
+    int MAX_CONTINUE = 2;
 
     //  Playfield bounds
     float maxBulletDistance = 150;
@@ -546,7 +550,7 @@ public class Main extends SimpleApplication {
         rootNode.attachChild(openSplashState);
 
         //Set up key binds
-        inputManager.addMapping("advance", new KeyTrigger(KeyInput.KEY_Z));
+        inputManager.addMapping("advance", new MouseButtonTrigger(0));
         inputManager.addListener(openSplashListener, new String[]{"advance"});
     }
 
@@ -640,9 +644,8 @@ public class Main extends SimpleApplication {
     public void initMainMenuBindings() {
         //Set up key binds for main menu
         inputManager.addMapping("select", new KeyTrigger(KeyInput.KEY_Z));
-        inputManager.addMapping("up", new KeyTrigger(KeyInput.KEY_UP));
-        inputManager.addMapping("down", new KeyTrigger(KeyInput.KEY_DOWN));
-        inputManager.addListener(mainMenuListener, new String[]{"select","up","down"});
+        inputManager.addMapping("mselect", new MouseButtonTrigger(0));
+        inputManager.addListener(mainMenuListener, new String[]{"select","mselect"});
     }
 
     public void initGameStart() {
@@ -669,7 +672,7 @@ public class Main extends SimpleApplication {
         cam.lookAt(gameStartState.getLocalTranslation(),Vector3f.UNIT_Y);
         rootNode.attachChild(gameStartState);
 
-        //Set up key binds for main menu
+        //Set up key binds for game start
         inputManager.addMapping("advance", new MouseButtonTrigger(0));
         inputManager.addListener(gameStartListener, new String[]{"advance"});
         
@@ -910,6 +913,7 @@ public class Main extends SimpleApplication {
     public void initGame() {
         System.out.println("initializing state " + currentGameState  + " (game)");
         rootNode.detachAllChildren();
+        continueCount = 0;
         //inputManager.setCursorVisible(false);
         initGameResetVars();
         cam.setFrustum(cam.getFrustumNear(), 10000f, cam.getFrustumLeft(), cam.getFrustumRight(), cam.getFrustumTop(), cam.getFrustumBottom());
@@ -994,7 +998,7 @@ public class Main extends SimpleApplication {
         
         menuPauseModel = new Box(64,14,0.5f);
         menuPause = new GuiImage("menuPause",menuPauseModel);
-        menuPause.move(screenWidth/2,390,20);
+        menuPause.move(screenWidth/2,370,20);
         menuPause.scale(1.5f);
         menuPauseMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         menuPauseMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/pause.png", true)));
@@ -1005,7 +1009,8 @@ public class Main extends SimpleApplication {
         
         menuGameOverModel = new Box(64,14,0.5f);
         menuGameOver = new GuiImage("menuGameOver",menuGameOverModel);
-        menuGameOver.move(screenWidth/2,360,20);
+        menuGameOver.move(screenWidth/2,370,20);
+        menuGameOver.scale(1.5f);
         menuGameOverMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         menuGameOverMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/gameover.png", true)));
         menuGameOverMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[2]));
@@ -1049,7 +1054,6 @@ public class Main extends SimpleApplication {
         gameMenu.attachChild(continueButton);
         gameMenu.attachChild(returnButton);*/
 
-        
         //Pause menu materials, set for transparency.
         gameMenuMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         gameMenuMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Models/game/pauseMenu.png", false)));
@@ -1121,7 +1125,6 @@ public class Main extends SimpleApplication {
 
         player.setLife(100);
         graze = 0;
-        score = 0;
 
         stageDisplay = new BitmapText(guiFont, false);
         stageDisplay.setColor(new ColorRGBA(1,1,1,displayAlpha));
@@ -1238,7 +1241,7 @@ public class Main extends SimpleApplication {
 
         initGameBindings();
 
-        RadialBlurFilter radialBlur = new RadialBlurFilter();
+        radialBlur = new RadialBlurFilter();
         radialBlur.setSampleStrength(0.5f);
         radialBlur.setSampleDist(1);
         filtPostProc.addFilter(radialBlur);
@@ -1353,12 +1356,15 @@ public class Main extends SimpleApplication {
     }
     public void initGameBindings() {
         //Set up key binds
+        
         inputManager.addMapping("left", new KeyTrigger(KeyInput.KEY_LEFT));
         inputManager.addMapping("right", new KeyTrigger(KeyInput.KEY_RIGHT));
         inputManager.addMapping("up", new KeyTrigger(KeyInput.KEY_UP));
-        inputManager.addMapping("down", new KeyTrigger(KeyInput.KEY_DOWN));
+        inputManager.addMapping("down", new KeyTrigger(KeyInput.KEY_DOWN));/*
         inputManager.addMapping("shoot", new KeyTrigger(KeyInput.KEY_Z));
-        inputManager.addMapping("focus", new KeyTrigger(KeyInput.KEY_LSHIFT));
+        inputManager.addMapping("focus", new KeyTrigger(KeyInput.KEY_LSHIFT));*/
+        inputManager.addMapping("shoot", new MouseButtonTrigger(0));
+        inputManager.addMapping("focus", new MouseButtonTrigger(1));
         inputManager.addMapping("pause", new KeyTrigger(KeyInput.KEY_P));
         inputManager.addListener(focusListener, new String[]{"left","right","up","down","focus"});
         inputManager.addListener(gameListener, new String[]{"left","right","up","down","focus","pause","shoot"});
@@ -1449,6 +1455,7 @@ public class Main extends SimpleApplication {
                 break;
 
             case 3://State == 4 : The actual game.  Just update.
+                handleGameMouse();
                 if(stateFade) {  //As always, fade in if faded out.
                     stateFade = false;
                     fadeFilter.fadeIn();
@@ -1487,7 +1494,7 @@ public class Main extends SimpleApplication {
                 } else {
                     if(!gameMenuActive) {
                         gameMenuActive = true;
-                        currGameMenuItem = GAMEMENU_CONTINUE;
+                        curGameMenuItem = GAMEMENU_CONTINUE;
                         gameState.attachChild(gameMenu);
                         
                         if(gameOverFlag) {
@@ -1507,20 +1514,20 @@ public class Main extends SimpleApplication {
     public void updateGameMenu() {
                     //BUTTON SCROLL CODE
                     //Reset button positions
-                    if(currGameMenuItem != GAMEMENU_RETRY && pauseRetryIndent > 0) {
+                    if(curGameMenuItem != GAMEMENU_RETRY && pauseRetryIndent > 0) {
                         retryButton.move(-buttonStep,0,0);
                         pauseRetryIndent -= buttonStep;
                     }
-                    if(currGameMenuItem != GAMEMENU_CONTINUE && pauseContinueIndent > 0) {
+                    if(curGameMenuItem != GAMEMENU_CONTINUE && pauseContinueIndent > 0) {
                         continueButton.move(-buttonStep,0,0);
                         pauseContinueIndent -= buttonStep;
                     }
-                    if(currMainMenuItem != GAMEMENU_RETURN && pauseReturnIndent > 0) {
+                    if(curMainMenuItem != GAMEMENU_RETURN && pauseReturnIndent > 0) {
                         returnButton.move(-buttonStep,0,0);
                         pauseReturnIndent -= buttonStep;
                     }
                     //Indent whichever button is the current button
-                    switch(currGameMenuItem) {
+                    switch(curGameMenuItem) {
                         case GAMEMENU_RETRY:
                             if(pauseRetryIndent < pauseButtonIndentation) {
                                 retryButton.move(buttonStep,0,0);
@@ -1618,7 +1625,6 @@ public class Main extends SimpleApplication {
             cam.lookAt(camFocalPoint.getLocalTranslation(), Vector3f.UNIT_Z);
             //cam.lookAt(new Vector3f(cam.getLocation().x, cam.getLocation().y - 0.2f, -1), Vector3f.UNIT_Z);
         }
-        handleGameMouse();
         playerLoc.set(gameMouseLoc.x,gameMouseLoc.y,0);
         if(playerLoc.x > playerMaxSide) {
            playerLoc.setX(playerMaxSide);
@@ -1972,7 +1978,7 @@ public class Main extends SimpleApplication {
         playerDeathEmitter.setQueueBucket(Bucket.Translucent);
         //Leaf explosion
         playerDeathEmitter.setMaterial(deathParticle);
-        playerDeathEmitter.setNumParticles(100);
+        playerDeathEmitter.setNumParticles(40);
         playerDeathEmitter.setImagesX(2); playerDeathEmitter.setImagesY(1); // 2x2 texture animation
         playerDeathEmitter.setEndColor(new ColorRGBA(1f, 0f, 0f, 0.4f));   // red
         playerDeathEmitter.setStartColor(new ColorRGBA(1f, 1f, 0f, 0.2f)); // yellow
@@ -1981,7 +1987,6 @@ public class Main extends SimpleApplication {
         playerDeathEmitter.setRotateSpeed(10);
         
         playerDeathEmitter.setParticlesPerSec(0);
-        playerDeathEmitter.emitAllParticles();
         playerDeathEmitter.getParticleInfluencer().setVelocityVariation(1);
         playerDeathEmitter.setStartSize(4f);
         playerDeathEmitter.setEndSize(0.2f);
@@ -4122,7 +4127,7 @@ public class Main extends SimpleApplication {
             spellcardBanner(tpf,stage);
         }
         createSpellCircle(stage);
-        if(spellCircleAlpha < 0.4f) {
+        if(spellCircleAlpha < 0.4f) { 
             spellCircleAlpha += tpf;
             spellCircleMat.setColor("m_Color", new ColorRGBA(1,1,1, spellCircleAlpha));
         }
@@ -4996,40 +5001,44 @@ public class Main extends SimpleApplication {
     };
     private ActionListener mainMenuListener = new ActionListener() {
         public void onAction(String name, boolean keyPressed, float tpf) {
-            if(name.equals("select") && keyPressed) {
+            if((name.equals("select") || name.equals("mselect"))&& keyPressed) {
+                System.out.println("Click detected");
                 //Perform main menu action depending on active button
-                switch(currMainMenuItem) {
+                System.out.println(curMainMenuItem);
+                if(curMainMenuItem == MAINMENU_START) {
+                    System.out.println("Start button clicked");
+                }
+                switch(curMainMenuItem) {
                     case MAINMENU_START:
                         mainMenuState.complete();
                         System.out.println("Advancing to state " + (currentGameState + 1));
                         inputManager.deleteMapping("select");
-                        inputManager.deleteMapping("up");
-                        inputManager.deleteMapping("down");
+                        inputManager.deleteMapping("mselect");
                         break;
-
                     case MAINMENU_EXIT:
                         stop();
+                        System.out.println("Exiting");
                         break;
                 }
             }
             if(name.equals("up") && keyPressed) {
                 //Up key pressed during main menu
-                currMainMenuItem--;
-                if(currMainMenuItem < 0) {
-                    currMainMenuItem = mainMenuSize;
+                curMainMenuItem--;
+                if(curMainMenuItem < 0) {
+                    curMainMenuItem = mainMenuSize;
                 }
             }
             if(name.equals("down") && keyPressed) {
-                currMainMenuItem++;
-                if(currMainMenuItem > mainMenuSize) {
-                    currMainMenuItem = 0;
+                curMainMenuItem++;
+                if(curMainMenuItem > mainMenuSize) {
+                    curMainMenuItem = 0;
                 }
             }
         }
     };
     private ActionListener gameStartListener = new ActionListener() {
         public void onAction(String name, boolean keyPressed, float tpf) {
-            if(name.equals("advance")&&keyPressed) {
+            if(name.equals("advance") && keyPressed) {
                 gameStartState.complete();
                 System.out.println("Advancing to state " + (currentGameState + 1));
                 inputManager.deleteMapping("advance");
@@ -5082,9 +5091,9 @@ public class Main extends SimpleApplication {
             }
             if(name.equals("up")) {
                 if(gamePause && keyPressed) {//Handle for pause menu
-                    currGameMenuItem--;
-                    if(currGameMenuItem < 0) {
-                        currGameMenuItem = pauseMenuSize;
+                    curGameMenuItem--;
+                    if(curGameMenuItem < 0) {
+                        curGameMenuItem = pauseMenuSize;
                     }
                 } else {//Handle for game
                     if(keyPressed) {
@@ -5103,9 +5112,9 @@ public class Main extends SimpleApplication {
             }
             if(name.equals("down")) {
                 if(gamePause && keyPressed) {//Handle for pause menu
-                    currGameMenuItem++;
-                    if(currGameMenuItem > pauseMenuSize) {
-                        currGameMenuItem = 0;
+                    curGameMenuItem++;
+                    if(curGameMenuItem > pauseMenuSize) {
+                        curGameMenuItem = 0;
                     }
                 } else {//Handle for game
                     if(keyPressed) {
@@ -5153,20 +5162,32 @@ public class Main extends SimpleApplication {
                         }
                     }
                 } else {//If we're paused, use it to select menu items.
-                    switch(currGameMenuItem) {
+                    switch(curGameMenuItem) {
                         case GAMEMENU_CONTINUE:
-                            if(gamePause) {
-                                unpauseGame();
-                            } else {
-                                pauseGame();
+                            if(continueCount < MAX_CONTINUE) {
+                                if(gamePause) {
+                                    unpauseGame();
+                                } else {
+                                    pauseGame();
+                                }                            
+                                player.setLife(100);
+                                graze = 0;
+                                heat = 0;
+                                if(gameOverFlag) {
+                                    continueCount++;
+                                }
+                                gameOverFlag = false;
                             }
-                            player.setLife(100);
-                            graze = 0;
                             break;
-                        case GAMEMENU_RETRY://IMPLEMENT
+                        case GAMEMENU_RETRY:
+                            gameState.complete();
+                            filtPostProc.removeFilter(radialBlur);
+                            fadeFilter.fadeOut();
+                            guiNode.detachAllChildren();
                             break;
                         case GAMEMENU_RETURN:
                             gameState.complete();
+                            filtPostProc.removeFilter(radialBlur);
                             fadeFilter.fadeOut();
                             guiNode.detachAllChildren();
                             break;
@@ -5238,11 +5259,16 @@ public class Main extends SimpleApplication {
         arrow.setLineWidth(3);
 
         //Sphere sphere = new Sphere(30, 30, 0.2f);
-        mark = new Geometry("BOOM!", arrow);
-        //mark = new Geometry("BOOM!", sphere);
-        Material mark_mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mark_mat.setColor("m_Color", ColorRGBA.Red);
-        mark.setMaterial(mark_mat);
+        mark = new Geometry("mark", arrow);
+        Material mark1mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        mark1mat.setColor("m_Color", ColorRGBA.Red);
+        mark.setMaterial(mark1mat);
+        
+        Box box = new Box(3,3,3);
+        mark2 = new Geometry("guiMark",box);
+        Material mark2mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        mark2mat.setColor("m_Color", ColorRGBA.Red);
+        mark2.setMaterial(mark2mat);
     }
     
     public void handleMainMenuMouse(float tpf) {
@@ -5261,10 +5287,10 @@ public class Main extends SimpleApplication {
             activeItem = closest.getGeometry().toString();
         } else {
             activeItem = new String();
-            mainMenuActiveItem = 0;
+            curMainMenuItem = MAINMENU_NULL;
         }
         if(activeItem.contains("start")) {
-            mainMenuActiveItem = 1;
+            curMainMenuItem = MAINMENU_START;
             if(titleAlpha[1] < 1) {
                 titleAlpha[1] += 3*tpf;
                 startButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha[1]));
@@ -5276,7 +5302,7 @@ public class Main extends SimpleApplication {
             }
         }
         if(activeItem.contains("exit")) {
-            mainMenuActiveItem = 2;
+            curMainMenuItem = MAINMENU_EXIT;
             if(titleAlpha[2] < 0.8) {
                 titleAlpha[2] += 3*tpf;
                 exitButtonMat.setColor("m_Color", new ColorRGBA(1,1,1, titleAlpha[2]));
@@ -5289,46 +5315,106 @@ public class Main extends SimpleApplication {
         }
     }
     public void handleGameMouse() {
-        Vector3f origin    = cam.getWorldCoordinates(inputManager.getCursorPosition(), 0.0f);
-        Vector3f direction = cam.getWorldCoordinates(inputManager.getCursorPosition(), 0.3f);
-        direction.subtractLocal(origin).normalizeLocal();
+        if(!gamePause) {
+            Vector3f origin    = cam.getWorldCoordinates(inputManager.getCursorPosition(), 0.0f);
+            Vector3f direction = cam.getWorldCoordinates(inputManager.getCursorPosition(), 0.3f);
+            direction.subtractLocal(origin).normalizeLocal();
 
-        Ray ray = new Ray(origin, direction);
-        CollisionResults results = new CollisionResults();
-        gamePlaneGeom.collideWith(ray, results);
-        /*
-        System.out.println("----- Collisions? " + results.size() + "-----");
-        for (int i = 0; i < results.size(); i++) {
-            // For each hit, we know distance, impact point, name of geometry.
-            float dist = results.getCollision(i).getDistance();
-            Vector3f pt = results.getCollision(i).getContactPoint();
-            String hit = results.getCollision(i).getGeometry().getName();
-            System.out.println("* Collision #" + i);
-            System.out.println("  You shot " + hit + " at " + pt + ", " + dist + " wu away.");
-        }*/
-        if (results.size() > 0) {
-            CollisionResult closest = results.getClosestCollision();
-            mark.setLocalTranslation(closest.getContactPoint());
-            gameMouseLoc.set(mark.getLocalTranslation());
-            Quaternion q = new Quaternion();
-            q.lookAt(closest.getContactNormal(), Vector3f.UNIT_Y);
-            mark.setLocalRotation(q);
+            Ray ray = new Ray(origin, direction);
+            CollisionResults results = new CollisionResults();
+            gamePlaneGeom.collideWith(ray, results);
 
-            rootNode.attachChild(mark);
+            if (results.size() > 0) {
+                CollisionResult closest = results.getClosestCollision();
+                mark.setLocalTranslation(closest.getContactPoint());
+                gameMouseLoc.set(mark.getLocalTranslation());
+                Quaternion q = new Quaternion();
+                q.lookAt(closest.getContactNormal(), Vector3f.UNIT_Y);
+                mark.setLocalRotation(q);
+
+                rootNode.attachChild(mark);
+            } else {
+                rootNode.detachChild(mark);
+            }
         } else {
-            rootNode.detachChild(mark);
+            switch(curGameMenuItem) {
+                case GAMEMENU_CONTINUE:
+                        if(continueCount < MAX_CONTINUE) {
+                            menuAlpha[3] = 1;
+                        } else {
+                            menuAlpha[3] = 0.7f;
+                        }
+                        menuAlpha[4] = 0.7f;
+                        menuAlpha[5] = 0.7f;
+                    break;
+                case GAMEMENU_RETRY:
+                        menuAlpha[4] = 1;
+                        menuAlpha[3] = 0.7f;
+                        menuAlpha[5] = 0.7f;
+                    break;
+                case GAMEMENU_RETURN:
+                        menuAlpha[5] = 1;
+                        menuAlpha[3] = 0.7f;
+                        menuAlpha[4] = 0.7f;
+                    break;
+                default:
+                    menuAlpha[3] = 0.7f;
+                    menuAlpha[4] = 0.7f;
+                    menuAlpha[5] = 0.7f;
+            }
+            //1: pause 2: gameover 3: continue 4: retry 5: return
+            menuPauseMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[1]));
+            menuPause.setMaterial(menuPauseMat);
+            menuGameOverMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[2]));
+            menuGameOver.setMaterial(menuGameOverMat);
+            menuContinueMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[3]));
+            menuContinue.setMaterial(menuContinueMat);
+            menuRetryMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[4]));
+            menuRetry.setMaterial(menuRetryMat);
+            menuReturnMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[5]));
+            menuReturn.setMaterial(menuReturnMat);
+            
+            //Handle for pause menu
+            Vector2f pos = inputManager.getCursorPosition();
+            Vector3f origin    = new Vector3f(pos.x,pos.y, 30.0f);
+            Vector3f direction = new Vector3f(pos.x,pos.y, 29.3f);
+            direction.subtractLocal(origin).normalizeLocal();
+            Ray ray = new Ray(origin, direction);
+            CollisionResults results = new CollisionResults();
+            guiNode.collideWith(ray, results);
+            mark2.setLocalTranslation(origin.add(0,0,50));   
+            guiNode.attachChild(mark2);
+            if (results.size() > 0) {
+                CollisionResult closest = results.getClosestCollision();
+                String name = closest.getGeometry().getName();
+                if(name.contains("Continue")) {
+                    curGameMenuItem = GAMEMENU_CONTINUE;
+                } else if(name.contains("Return")) {
+                    curGameMenuItem = GAMEMENU_RETURN;
+                } else if(name.contains("Retry")) {
+                    curGameMenuItem = GAMEMENU_RETRY;
+                } else {
+                    curGameMenuItem = GAMEMENU_NULL;
+                }
+            } else {
+                 curGameMenuItem = GAMEMENU_NULL;
+            }
         }
+        
     }
     
     private void fadePauseMenuIn(float tpf) {
-            menuAlpha[1] += tpf*1;
-            menuAlpha[2] += tpf*1.5;
-            menuAlpha[3] += tpf*2;
-            menuAlpha[4] += tpf*2.5;
-            menuAlpha[5] += tpf*3;
-            for(int i = 0; i < 9; i++) {
-                if(menuAlpha[i] > 1) {
-                    menuAlpha[i] = 1;
+            if(!gameOverFlag) {
+                menuAlpha[1] += tpf*1;
+            } else {
+                menuAlpha[2] += tpf*1;
+            }
+            menuAlpha[3] += tpf*1.5;
+            menuAlpha[4] += tpf*2;
+            menuAlpha[5] += tpf*2.5;
+            for(int i = 2; i < 9; i++) {
+                if(menuAlpha[i] > 0.7) {
+                    menuAlpha[i] = 0.7f;
                 }
             }
             //1: pause 2: gameover 3: continue 4: retry 5: return

@@ -27,7 +27,7 @@ public class Player extends GameObject {
     float stageAngle;
     float distance = 0;
     private int life;
-
+    public static final int MAX_LIFE = 50;
     private float hitSize = 0.1f;
     private float grazeSize = 10;
     

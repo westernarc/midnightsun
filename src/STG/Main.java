@@ -13,6 +13,7 @@ import com.jme3.animation.AnimEventListener;
 import com.jme3.animation.LoopMode;
 import com.jme3.app.SimpleApplication;
 import com.jme3.asset.TextureKey;
+import com.jme3.audio.AudioNode;
 import com.jme3.bounding.BoundingSphere;
 import com.jme3.bounding.BoundingVolume;
 import com.jme3.collision.CollisionResult;
@@ -74,6 +75,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Main extends SimpleApplication {
+    AudioNode music;
+    //Music:
+    //menu: IN 00
+    //s1:IN 07
+    //s2:PCB 01
+    //s3:PCB 10
+    //s4:PCB 09
     Geometry mark;
     Geometry mark2;
     //CONSTANTS
@@ -163,7 +171,7 @@ public class Main extends SimpleApplication {
     int currentGameState;  //Current game state, out of 5 possible states.
     boolean advanceEventTime;   //Event line paused
     boolean spellcardActive;    //Stores whether a spellcard is active
-    boolean debug = true; //skips to game
+    boolean debug = false; //skips to game
     boolean gamePause = false;      //Stores whether game paused
     boolean gameOverFlag = false;   //Stores whether game over
     boolean gameMenuActive = false; //In game menu is active
@@ -196,8 +204,8 @@ public class Main extends SimpleApplication {
     int heat;   //Heat:  Gained by graze, lost over time.  Used to attack
     int heatState = 0; //HEAT: 0, 1, 2, 3
     int heatMax = 2000;
-    float heatLossRate = 50f;
-    float heatGainRate = 0.2f;
+    float heatLossRate = 70f;
+    float heatGainRate = 0.13f;
     int stage = 1;
     int spell = 1;
     
@@ -554,6 +562,19 @@ public class Main extends SimpleApplication {
         inputManager.addListener(openSplashListener, new String[]{"advance"});
     }
 
+    private void setBackgroundMusic(String file) {
+        if(music != null) {
+            music.stop();
+        }
+        try {
+            music = new AudioNode(assetManager, file, false);
+            music.setLooping(true);
+            rootNode.attachChild(music);
+            music.setVolume(0.5f);
+            music.play();
+        } catch(Exception ex) {
+        }                
+    }
     //Initiates main menu state.
     public void initMainMenu() {
         //Clear root node children before starting.
@@ -562,12 +583,15 @@ public class Main extends SimpleApplication {
         //  root>state>button>spatial
         //  root>state>button>spatial
         //  root>state>background>spatial
-
+        inputManager.setCursorVisible(false);
         System.out.println("initializing state " + currentGameState);
         rootNode.detachAllChildren();
+        guiNode.detachAllChildren();
+        initMark();
         cam.setLocation(new Vector3f(0f,0f,15f));
         cam.lookAt(new Vector3f(0f,0f,0f), Vector3f.UNIT_Z);
         mainMenuState = new StateNode("mainMenuNode");
+        setBackgroundMusic("Sounds/menu.ogg");
         titleAlpha = new float[9];
 
         titleBackground = new PanelNode("titleBackgroundPanel");
@@ -653,7 +677,7 @@ public class Main extends SimpleApplication {
         rootNode.detachAllChildren();
         //loadAssets();
         gameStartState = new StateNode("gameStartState");
-
+        setBackgroundMusic("");
         instructionsPanel = new PanelNode("instructions");
         instructionsPanelModel = assetManager.loadModel("Models/gameStart/logo.j3o");
         instructionsPanelMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
@@ -904,7 +928,7 @@ public class Main extends SimpleApplication {
         squareCreated = false;
         resetCardVars();
         try {
-            player.setLife(100);
+            player.setLife(player.MAX_LIFE);
         } catch(Exception ex) {
             //Player doesn't exist yet
         }
@@ -999,7 +1023,7 @@ public class Main extends SimpleApplication {
         menuPauseModel = new Box(64,14,0.5f);
         menuPause = new GuiImage("menuPause",menuPauseModel);
         menuPause.move(screenWidth/2,370,20);
-        menuPause.scale(1.5f);
+        menuPause.scale(1.8f);
         menuPauseMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         menuPauseMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/pause.png", true)));
         menuPauseMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[1]));
@@ -1010,7 +1034,7 @@ public class Main extends SimpleApplication {
         menuGameOverModel = new Box(64,14,0.5f);
         menuGameOver = new GuiImage("menuGameOver",menuGameOverModel);
         menuGameOver.move(screenWidth/2,370,20);
-        menuGameOver.scale(1.5f);
+        menuGameOver.scale(1.8f);
         menuGameOverMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         menuGameOverMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/pause/gameover.png", true)));
         menuGameOverMat.setColor("m_Color", new ColorRGBA(1,1,1,menuAlpha[2]));
@@ -1123,7 +1147,7 @@ public class Main extends SimpleApplication {
         dialogue.setLocalTranslation(screenWidth / 4, dialogue.getLineHeight(), 0);
         guiNode.attachChild(dialogue);
 
-        player.setLife(100);
+        player.setLife(player.MAX_LIFE);
         graze = 0;
 
         stageDisplay = new BitmapText(guiFont, false);
@@ -1274,8 +1298,7 @@ public class Main extends SimpleApplication {
 
         gamePlaneGeom.setMaterial(new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md"));
         gamePlaneGeom.setCullHint(CullHint.Always);
-        initMark();
-        inputManager.setCursorVisible(false);
+        
         objectNode.attachChild(gamePlaneGeom);
     }
 
@@ -1919,8 +1942,7 @@ public class Main extends SimpleApplication {
             heatState = 3;
         }
         if(playerFocus) {
-            enemy.life = 0;
-            heat += 1000;
+            heat += tpf*heatGainRate;
             player.turnSpeed = 0.5f;
             player.moveSpeed = 1;
         } else {
@@ -1939,7 +1961,7 @@ public class Main extends SimpleApplication {
         player.attachChild(playerModel);
 
 
-        player.scale(2f);
+        player.scale(1f);
         player.distance = 70;
         player.setLocalTranslation(0, player.distance, 0);
         player.angle = 0;
@@ -2003,7 +2025,7 @@ public class Main extends SimpleApplication {
         enemyMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/hada01.png", false)));
         enemy.attachChild(enemyModel);
         enemy.setMaterial(enemyMat);
-        enemy.scale(2f);
+        enemy.scale(1f);
     }
     //----------------------------------------------------------------------------------
     //TIMELINE FLAGS
@@ -2179,7 +2201,7 @@ public class Main extends SimpleApplication {
             System.out.println("Spawning");
             spawnDone = true;
             timer[T_INTRO_TIME] = 0;
-            
+            setBackgroundMusic("Sounds/stage1.ogg");
         }
         if(spawnDone && !introDone) {
             advanceEventTime = false;
@@ -2209,7 +2231,7 @@ public class Main extends SimpleApplication {
             dialogueFlag[4] = true;
         }
         if(timer[T_EVENT_TIME] > 4 && !gameFlag[STAGE1_1]) {
-            stage2spell1(tpf);
+            stage1spell1(tpf);
             //stage2spell2(tpf);
             //stage2spell1(tpf);
         }
@@ -2249,6 +2271,7 @@ public class Main extends SimpleApplication {
         if(timer[T_EVENT_TIME] > 22  && !dialogueFlag[7]) {
             dialogueFlag[7] = true;
             say("A magician too?", 1);
+            setBackgroundMusic("Sounds/stage2.ogg");
         }
 
         if(timer[T_EVENT_TIME] > 22.2 && !dialogueFlag[8]) {
@@ -2299,6 +2322,7 @@ public class Main extends SimpleApplication {
         if(timer[T_EVENT_TIME] > 42  && !dialogueFlag[9]) {
             dialogueFlag[9] = true;
             say("Nice hair.", 1);
+            setBackgroundMusic("Sounds/stage3.ogg");
         }
 
         if(timer[T_EVENT_TIME] > 42.2 && !dialogueFlag[10]) {
@@ -2349,6 +2373,7 @@ public class Main extends SimpleApplication {
         if(timer[T_EVENT_TIME] > 55  && !dialogueFlag[14]) {
             dialogueFlag[14] = true;
             say("What are you so mad about?", 1);
+            setBackgroundMusic("Sounds/stage4.ogg");
         }
 
         if(timer[T_EVENT_TIME] > 55.2 && !dialogueFlag[15]) {
@@ -2484,7 +2509,7 @@ public class Main extends SimpleApplication {
                 introBannerEnterDone = true;
             }
         }
-        if(timer[T_INTRO_TIME] > 5 && !introBannerExitDone && introBannerEnterDone) {
+        if(timer[T_INTRO_TIME] > 7 && !introBannerExitDone && introBannerEnterDone) {
             if(introBanner.getLocalTranslation().y > -400) {
                 introBannerAlpha -= tpf;
                 introBanner.move(0,-0.5f,0);
@@ -2493,7 +2518,7 @@ public class Main extends SimpleApplication {
                 introBannerExitDone = true;
             }
         }
-        if(timer[T_INTRO_TIME] > 6) {
+        if(timer[T_INTRO_TIME] > 8) {
             introBannerAlpha = 0;
             introBannerMat.setColor("m_Color", new ColorRGBA(1, 1, 1, introBannerAlpha));
             camFocalPoint.moveTo(gameFocalPoint, 1f);
@@ -5170,7 +5195,7 @@ public class Main extends SimpleApplication {
                                 } else {
                                     pauseGame();
                                 }                            
-                                player.setLife(100);
+                                player.setLife(player.MAX_LIFE);
                                 graze = 0;
                                 heat = 0;
                                 if(gameOverFlag) {
@@ -5255,19 +5280,18 @@ public class Main extends SimpleApplication {
     };
 
     protected void initMark() {
-        Arrow arrow = new Arrow(Vector3f.UNIT_Z.mult(2f));
-        arrow.setLineWidth(3);
-
-        //Sphere sphere = new Sphere(30, 30, 0.2f);
-        mark = new Geometry("mark", arrow);
+        Box box = new Box(5,5,1);
+        Box box1 = new Box(0.4f,0.4f,0.01f);
+        mark = new Geometry("mark", box1);
         Material mark1mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mark1mat.setColor("m_Color", ColorRGBA.Red);
+        mark1mat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/cursor.png"));
+        mark1mat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
+        mark.setQueueBucket(Bucket.Translucent);
         mark.setMaterial(mark1mat);
-        
-        Box box = new Box(3,3,3);
         mark2 = new Geometry("guiMark",box);
         Material mark2mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mark2mat.setColor("m_Color", ColorRGBA.Red);
+        mark2mat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/cursor.png"));
+        mark2mat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
         mark2.setMaterial(mark2mat);
     }
     
@@ -5279,7 +5303,10 @@ public class Main extends SimpleApplication {
         Ray ray = new Ray(origin, direction);
         CollisionResults results = new CollisionResults();
         titleUIElements.collideWith(ray, results);
-
+        mark2.setLocalTranslation(inputManager.getCursorPosition().x,inputManager.getCursorPosition().y,0);
+        if(!guiNode.hasChild(mark2)) {
+            guiNode.attachChild(mark2);
+        }
         if (results.size() > 0) {
             CollisionResult closest = results.getClosestCollision();
             Quaternion q = new Quaternion();
@@ -5333,6 +5360,9 @@ public class Main extends SimpleApplication {
                 mark.setLocalRotation(q);
 
                 rootNode.attachChild(mark);
+                if(guiNode.hasChild(mark2)) {
+                    guiNode.detachChild(mark2);
+                }
             } else {
                 rootNode.detachChild(mark);
             }

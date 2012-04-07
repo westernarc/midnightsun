@@ -5,15 +5,9 @@
 
 package STG;
 
-import com.jme3.asset.AssetManager;
-import com.jme3.bounding.BoundingSphere;
-import com.jme3.material.Material;
-import com.jme3.material.RenderState.BlendMode;
+import com.jme3.math.FastMath;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
-import com.jme3.renderer.queue.RenderQueue.Bucket;
-import com.jme3.scene.Geometry;
-import com.jme3.scene.Spatial;
-import com.jme3.scene.shape.Sphere;
 /**
  *Player subclass.  Helps keep track of variables that will make it easier
  * to calculate radial coordinates.
@@ -27,9 +21,9 @@ public class Player extends GameObject {
     float stageAngle;
     float distance = 0;
     private int life;
-    public static final int MAX_LIFE = 50;
+    public static final int MAX_LIFE = 350;
     private float hitSize = 0.1f;
-    private float grazeSize = 10;
+    private float grazeSize = 6;
     
     public float getHitSize() {
         return hitSize;
@@ -87,5 +81,28 @@ public class Player extends GameObject {
         return this.getLocalTranslation().z;
     }
 
+    public void lookAt(Vector3f position, Vector3f upVector) {
+        setLocalRotation(new Quaternion());
+        float difX = position.x - getX();
+        float difY = position.y - getY();
+        float difZ = position.z;
+        float angleX = FastMath.atan(difX*10/difZ);
+        float angleY = -FastMath.atan(difY*10/difZ);
+        float turnLimit = FastMath.QUARTER_PI*4/5;
+        if(angleX > turnLimit) {
+            angleX = turnLimit;
+        }
+        if(angleX < -turnLimit) {
+            angleX = -turnLimit;
+        }
+        if(angleY > turnLimit) {
+            angleY = turnLimit;
+        }
+        if(angleY < -turnLimit) {
+            angleY = -turnLimit;
+        }
+        this.rotate(angleY,angleX,0);
+    }
+    
 
 }

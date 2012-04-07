@@ -23,6 +23,9 @@ public class GameObject extends Node {
     float targScale;
     float scaleSpeed;
 
+    public Vector3f getDestination() {
+        return destination;
+    }
     public GameObject(String name) {
         super(name);
         direction = new Vector3f(0,0,1);

@@ -118,11 +118,6 @@ public class Main extends SimpleApplication {
     StateNode gameState;
     StateNode endGameState;
 
-    //3 Menu nodes.  Menu nodes are overlayed menus
-    MenuNode optionsMenu;
-    MenuNode gameOverMenu;
-    MenuNode gameMenu;
-
     //Button nodes.  Buttons should be attached to menus
     ButtonNode startButton;
     ButtonNode optionsButton;
@@ -171,7 +166,7 @@ public class Main extends SimpleApplication {
     int currentGameState;  //Current game state, out of 5 possible states.
     boolean advanceEventTime;   //Event line paused
     boolean spellcardActive;    //Stores whether a spellcard is active
-    boolean debug = false; //skips to game
+    boolean debug = true; //skips to game
     boolean gamePause = false;      //Stores whether game paused
     boolean gameOverFlag = false;   //Stores whether game over
     boolean gameMenuActive = false; //In game menu is active
@@ -205,7 +200,7 @@ public class Main extends SimpleApplication {
     int heatState = 0; //HEAT: 0, 1, 2, 3
     int heatMax = 2000;
     float heatLossRate = 70f;
-    float heatGainRate = 0.13f;
+    float heatGainRate = 0.18f;
     int stage = 1;
     int spell = 1;
     
@@ -304,13 +299,6 @@ public class Main extends SimpleApplication {
     Material enemyMat;
 
     //Pause Menu assets
-    Material gameMenuMat;
-    Spatial gameMenuBack;
-    Spatial pause;
-    Spatial gameOver;
-    Spatial continueButton;
-    Spatial retryButton;
-    Spatial returnButton;
     
     float[] menuAlpha = new float[9];
     //1: pause 2: gameover 3: continue 4: retry 5: return
@@ -468,8 +456,8 @@ public class Main extends SimpleApplication {
     Material introBannerMat;
     float introBannerAlpha = 0;
 
-    GameObject spellcardBanner;
-    Spatial spellcardBannerModel;
+    Geometry spellcardBanner;
+    Box spellcardBannerModel;
     Material spellcardBannerMat;
     float spellcardBannerAlpha = 0;
 
@@ -488,6 +476,9 @@ public class Main extends SimpleApplication {
     ParticleEmitter enemyDeathEmitter;
     ParticleEmitter playerDeathEmitter;
     ParticleEmitter playerHeatEmitter;
+    ParticleEmitter playerFocusEmitter;
+    float focusTimer = 0;
+    float focusLimit = 200;
     //---------------------------------------------------------
 
     public static void main(String[] args) {
@@ -523,7 +514,7 @@ public class Main extends SimpleApplication {
             TextureKey key = new TextureKey("Textures/mainMenu/frame" + i + ".png", false);
             mainMenuFrame[i] = assetManager.loadTexture(key);
         }
-        loadAssets();
+        initMark();
         if(debug) {
             currentGameState = 2;
             initGameStart();
@@ -587,7 +578,7 @@ public class Main extends SimpleApplication {
         System.out.println("initializing state " + currentGameState);
         rootNode.detachAllChildren();
         guiNode.detachAllChildren();
-        initMark();
+        
         cam.setLocation(new Vector3f(0f,0f,15f));
         cam.lookAt(new Vector3f(0f,0f,0f), Vector3f.UNIT_Z);
         mainMenuState = new StateNode("mainMenuNode");
@@ -647,7 +638,7 @@ public class Main extends SimpleApplication {
         exitButton.attachChild(exitButtonModel);
         titleUIElements.attachChild(exitButton);
 
-        titleUIElements.move(-5,1,0);
+        titleUIElements.move(-2,1,0);
         titleUIElements.setQueueBucket(Bucket.Translucent);
         mainMenuState.attachChild(titleUIElements);
         DirectionalLight mainMenuLight = new DirectionalLight();
@@ -675,7 +666,8 @@ public class Main extends SimpleApplication {
     public void initGameStart() {
         System.out.println("initializing state " + currentGameState + " (gamestart)");
         rootNode.detachAllChildren();
-        //loadAssets();
+        guiNode.detachAllChildren();
+        loadAssets();
         gameStartState = new StateNode("gameStartState");
         setBackgroundMusic("");
         instructionsPanel = new PanelNode("instructions");
@@ -872,18 +864,17 @@ public class Main extends SimpleApplication {
         cutEnemy.scale(2);
         guiNode.attachChild(cutEnemy);
         
-        spellcardBannerModel = assetManager.loadModel("Models/game/spellcardBanner.j3o");
-        spellcardBanner = new GameObject("spellcardBanner");
+        spellcardBannerModel = new Box(32,1024,1);
+        spellcardBanner = new Geometry("spellcardBanner", spellcardBannerModel);
         spellcardBannerMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        Texture spellcardBannerTex = assetManager.loadTexture(new TextureKey("Textures/game/text/stage1.png"));
+        Texture spellcardBannerTex = assetManager.loadTexture(new TextureKey("Textures/game/text/banner.png"));
         spellcardBannerMat.setTexture("m_ColorMap", spellcardBannerTex);
-        spellcardBannerAlpha = 1;
+        spellcardBannerAlpha = 0;
         spellcardBannerMat.setColor("m_Color", new ColorRGBA(1,1,1,spellcardBannerAlpha));
         spellcardBannerMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
-        spellcardBannerModel.setMaterial(spellcardBannerMat);
-        spellcardBanner.attachChild(spellcardBannerModel);
+        spellcardBanner.setMaterial(spellcardBannerMat);
         guiNode.attachChild(spellcardBanner);
-        spellcardBanner.move(230,230,0);
+        spellcardBanner.move(230,700,0);
         //spellcardBanner.rotate(-FastMath.HALF_PI,0,0);
         spellcardBanner.setCullHint(CullHint.Never);
 
@@ -938,10 +929,15 @@ public class Main extends SimpleApplication {
         System.out.println("initializing state " + currentGameState  + " (game)");
         rootNode.detachAllChildren();
         continueCount = 0;
-        //inputManager.setCursorVisible(false);
+        System.out.println(cam.getFrustumNear());
+        System.out.println(cam.getFrustumFar());
+        cam.setFrustumFar(0);
+        cam.setFrustumNear(0);
+        inputManager.setCursorVisible(false);
         initGameResetVars();
         cam.setFrustum(cam.getFrustumNear(), 10000f, cam.getFrustumLeft(), cam.getFrustumRight(), cam.getFrustumTop(), cam.getFrustumBottom());
-
+        initMark();
+        introBannerAlpha = 0;
         gameState = new StateNode("gameState");
         objectNode = new Node("objectNode");
         bulletNode = new Node("bulletNode");
@@ -1000,19 +996,6 @@ public class Main extends SimpleApplication {
         gameState.attachChild(shotNode);
 
         //Set up pause menu.
-        gameMenu = new MenuNode("gameMenu");
-        pause = assetManager.loadModel("Models/game/pause.j3o");
-        pause.setName("pause");
-        gameOver = assetManager.loadModel("Models/game/gameover.j3o");
-        gameOver.setName("gameOver");
-        gameMenuBack = assetManager.loadModel("Models/game/pauseBack.j3o");
-        gameMenuBack.setName("gameMenuBack");
-        retryButton = assetManager.loadModel("Models/game/retryButton.j3o");
-        retryButton.setName("retryButton");
-        continueButton = assetManager.loadModel("Models/game/continueButton.j3o");
-        continueButton.setName("continueButton");
-        returnButton = assetManager.loadModel("Models/game/returnButton.j3o");
-        returnButton.setName("returnButton");
         
         for(int i = 0; i < 9; i++) {
             if(menuAlpha[i] < 0) {
@@ -1071,31 +1054,7 @@ public class Main extends SimpleApplication {
         menuReturnMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
         menuReturn.setMaterial(menuReturnMat);
         guiNode.attachChild(menuReturn);
-        /*
-        gameMenu.attachChild(gameMenuBack);
-        gameMenu.attachChild(pause);
-        gameMenu.attachChild(retryButton);
-        gameMenu.attachChild(continueButton);
-        gameMenu.attachChild(returnButton);*/
 
-        //Pause menu materials, set for transparency.
-        gameMenuMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        gameMenuMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Models/game/pauseMenu.png", false)));
-        gameMenuMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
-        pause.setQueueBucket(Bucket.Transparent);
-        gameOver.setQueueBucket(Bucket.Transparent);
-        retryButton.setQueueBucket(Bucket.Transparent);
-        continueButton.setQueueBucket(Bucket.Transparent);
-        returnButton.setQueueBucket(Bucket.Transparent);
-        pause.setMaterial(gameMenuMat);
-        gameOver.setMaterial(gameMenuMat);
-        gameMenuBack.setMaterial(gameMenuMat);
-        retryButton.setMaterial(gameMenuMat);
-        continueButton.setMaterial(gameMenuMat);
-        returnButton.setMaterial(gameMenuMat);
-
-        //Adjust pause node...
-        gameMenu.scale(0.5f);
         //Set up dialogue pane and portraits
         dialogueNode = new Node("DialogueNode");
 
@@ -1152,91 +1111,91 @@ public class Main extends SimpleApplication {
 
         stageDisplay = new BitmapText(guiFont, false);
         stageDisplay.setColor(new ColorRGBA(1,1,1,displayAlpha));
-        stageDisplay.setSize(guiFont.getCharSet().getRenderedSize()/2.7f);
-        stageDisplay.setLocalTranslation(screenWidth - 180, screenHeight - 19,0);
+        stageDisplay.setSize(guiFont.getCharSet().getRenderedSize()/2.7f/windowScale);
+        stageDisplay.setLocalTranslation(screenWidth - 180/windowScale, screenHeight - 19/windowScale,0);
         stageDisplay.setText("STAGE");
         guiNode.attachChild(stageDisplay);
         stageReading = new BitmapText(guiFont, false);
         stageReading.setColor(new ColorRGBA(1,1,1,displayAlpha));
-        stageReading.setSize(guiFont.getCharSet().getRenderedSize()/1.2f);
-        stageReading.setLocalTranslation(screenWidth - 180, screenHeight - 19 - stageDisplay.getLineHeight(),0);
+        stageReading.setSize(guiFont.getCharSet().getRenderedSize()/1.2f/windowScale);
+        stageReading.setLocalTranslation(screenWidth - 180/windowScale, screenHeight - 19/windowScale - stageDisplay.getLineHeight()/windowScale,0);
         guiNode.attachChild(stageReading);
 
         spellDisplay = new BitmapText(guiFont, false);
         spellDisplay.setColor(new ColorRGBA(1,1,1,displayAlpha));
-        spellDisplay.setSize(guiFont.getCharSet().getRenderedSize()/2.7f);
-        spellDisplay.setLocalTranslation(screenWidth - 260, screenHeight - 19,0);
+        spellDisplay.setSize(guiFont.getCharSet().getRenderedSize()/2.7f/windowScale);
+        spellDisplay.setLocalTranslation(screenWidth - 260/windowScale, screenHeight - 19/windowScale,0);
         spellDisplay.setText("SPELL");
         guiNode.attachChild(spellDisplay);
         spellReading = new BitmapText(guiFont, false);
         spellReading.setColor(new ColorRGBA(1,1,1,displayAlpha));
-        spellReading.setSize(guiFont.getCharSet().getRenderedSize()/1.2f);
-        spellReading.setLocalTranslation(screenWidth - 260, screenHeight - 19 - spellDisplay.getLineHeight(),0);
+        spellReading.setSize(guiFont.getCharSet().getRenderedSize()/1.2f/windowScale);
+        spellReading.setLocalTranslation(screenWidth - 260/windowScale, screenHeight - 19/windowScale - spellDisplay.getLineHeight()/windowScale,0);
         guiNode.attachChild(spellReading);
 
         lifeDisplay = new BitmapText(guiFont,false);
         lifeDisplay.setColor(new ColorRGBA(1,1,1,displayAlpha));
-        lifeDisplay.setSize(guiFont.getCharSet().getRenderedSize()/2.7f);
-        lifeDisplay.setLocalTranslation(screenWidth - 90, screenHeight - 68,0);
+        lifeDisplay.setSize(guiFont.getCharSet().getRenderedSize()/2.7f/windowScale);
+        lifeDisplay.setLocalTranslation(screenWidth - 90/windowScale, screenHeight - 68/windowScale,0);
         lifeDisplay.setText("LIFE");
         guiNode.attachChild(lifeDisplay);
         lifeReading = new BitmapText(guiFont, false);
         lifeReading.setColor(new ColorRGBA(1,1,1,displayAlpha));
-        lifeReading.setSize(guiFont.getCharSet().getRenderedSize()/1.2f);
-        lifeReading.setLocalTranslation(screenWidth - 90, screenHeight - 68 - lifeDisplay.getLineHeight(),0);
+        lifeReading.setSize(guiFont.getCharSet().getRenderedSize()/1.2f/windowScale);
+        lifeReading.setLocalTranslation(screenWidth - 90/windowScale, screenHeight - 68/windowScale - lifeDisplay.getLineHeight()/windowScale,0);
         guiNode.attachChild(lifeReading);
 
         grazeDisplay = new BitmapText(guiFont, false);
         grazeDisplay.setColor(new ColorRGBA(1,1,1,displayAlpha));
-        grazeDisplay.setSize(guiFont.getCharSet().getRenderedSize()/2.7f);
-        grazeDisplay.setLocalTranslation(screenWidth - 90, screenHeight - 110,0);
+        grazeDisplay.setSize(guiFont.getCharSet().getRenderedSize()/2.7f/windowScale);
+        grazeDisplay.setLocalTranslation(screenWidth - 90/windowScale, screenHeight - 110/windowScale,0);
         grazeDisplay.setText("GRAZE");
         guiNode.attachChild(grazeDisplay);
         grazeReading = new BitmapText(guiFont, false);
         grazeReading.setColor(new ColorRGBA(1,1,1,displayAlpha));
-        grazeReading.setSize(guiFont.getCharSet().getRenderedSize()/1.2f);
-        grazeReading.setLocalTranslation(screenWidth - 90, screenHeight - 110 - grazeDisplay.getLineHeight(),0);
+        grazeReading.setSize(guiFont.getCharSet().getRenderedSize()/1.2f/windowScale);
+        grazeReading.setLocalTranslation(screenWidth - 90/windowScale, screenHeight - 110/windowScale - grazeDisplay.getLineHeight()/windowScale,0);
         guiNode.attachChild(grazeReading);
 
         heatDisplay = new BitmapText(guiFont, false);
         heatDisplay.setColor(new ColorRGBA(1,1,1,displayAlpha));
-        heatDisplay.setSize(guiFont.getCharSet().getRenderedSize()/2.7f);
-        heatDisplay.setLocalTranslation(screenWidth - 90, screenHeight - 152,0);
+        heatDisplay.setSize(guiFont.getCharSet().getRenderedSize()/2.7f/windowScale);
+        heatDisplay.setLocalTranslation(screenWidth - 90/windowScale, screenHeight - 152/windowScale,0);
         heatDisplay.setText("HEAT");
         guiNode.attachChild(heatDisplay);
         heatReading = new BitmapText(guiFont, false);
         heatReading.setColor(new ColorRGBA(1,1,1,displayAlpha));
-        heatReading.setSize(guiFont.getCharSet().getRenderedSize()/1.2f);
-        heatReading.setLocalTranslation(screenWidth - 90, screenHeight - 152 - heatDisplay.getLineHeight(),0);
+        heatReading.setSize(guiFont.getCharSet().getRenderedSize()/1.2f/windowScale);
+        heatReading.setLocalTranslation(screenWidth - 90/windowScale, screenHeight - 152/windowScale - heatDisplay.getLineHeight()/windowScale,0);
         guiNode.attachChild(heatReading);
 
         scoreReading = new BitmapText(guiFont,false);
-        scoreReading.setSize(guiFont.getCharSet().getRenderedSize());
-        scoreReading.setLocalTranslation(0,dialogue.getLineHeight()*2.5f,0);
+        scoreReading.setSize(guiFont.getCharSet().getRenderedSize()/windowScale);
+        scoreReading.setLocalTranslation(0,dialogue.getLineHeight()*2.5f/windowScale,0);
         guiNode.attachChild(scoreReading);
 
         timerDisplay = new BitmapText(guiFont,false);
         timerDisplay.setColor(new ColorRGBA(1f,1f,1f, displayAlpha));
-        timerDisplay.setSize(guiFont.getCharSet().getRenderedSize()*1.7f);
-        timerDisplay.setBox(new Rectangle(screenWidth - 135,screenHeight - 10,60,10));
+        timerDisplay.setSize(guiFont.getCharSet().getRenderedSize()*1.9f/windowScale);
+        timerDisplay.setBox(new Rectangle(screenWidth - 140/windowScale,screenHeight - 7/windowScale,60/windowScale,10/windowScale));
         timerDisplay.setAlignment(Align.Right);
         guiNode.attachChild(timerDisplay);
         timerDisplaySeconds = new BitmapText(guiFont, false);
         timerDisplaySeconds.setColor(new ColorRGBA(1f,1f,1f, displayAlpha));
-        timerDisplaySeconds.setSize(guiFont.getCharSet().getRenderedSize()/1.7f);
-        timerDisplaySeconds.setLocalTranslation(screenWidth - 70,screenHeight-36,0);
+        timerDisplaySeconds.setSize(guiFont.getCharSet().getRenderedSize()/1.7f/windowScale);
+        timerDisplaySeconds.setLocalTranslation(screenWidth - 75/windowScale,screenHeight-36/windowScale,0);
         guiNode.attachChild(timerDisplaySeconds);
 
         enemyDisplay = new BitmapText(guiFont, false);
         enemyDisplay.setColor(new ColorRGBA(1,1,1,displayAlpha));
-        enemyDisplay.setSize(guiFont.getCharSet().getRenderedSize()/2.7f);
-        enemyDisplay.setLocalTranslation(screenWidth - 340, screenHeight - 19,0);
+        enemyDisplay.setSize(guiFont.getCharSet().getRenderedSize()/2.7f/windowScale);
+        enemyDisplay.setLocalTranslation(screenWidth - 340/windowScale, screenHeight - 19/windowScale,0);
         enemyDisplay.setText("ENEMY");
         guiNode.attachChild(enemyDisplay);
         enemyReading = new BitmapText(guiFont, false);
         enemyReading.setColor(new ColorRGBA(1,1,1,displayAlpha));
-        enemyReading.setSize(guiFont.getCharSet().getRenderedSize()/1.2f);
-        enemyReading.setLocalTranslation(screenWidth - 340, screenHeight - 19 - enemyDisplay.getLineHeight(),0);
+        enemyReading.setSize(guiFont.getCharSet().getRenderedSize()/1.2f/windowScale);
+        enemyReading.setLocalTranslation(screenWidth - 340/windowScale, screenHeight - 19/windowScale - enemyDisplay.getLineHeight()/windowScale,0);
         guiNode.attachChild(enemyReading);
 
         stageClearDisplay1 = new BitmapText(guiFont, false);
@@ -1500,8 +1459,8 @@ public class Main extends SimpleApplication {
 
                 if(!gamePause) {
                     updateGame(tpf);
-                    if(!gameUnfaded && !gameFlag[GFLAG_SCORE]) {
-                        unfadeGame(tpf);
+                    if(!gameUnfaded && !gameFlag[GFLAG_SCORE] && introDone) {
+                        unfadeGame(tpf,true);
                     }
                     if(player.getLife() < 0) {
                         System.out.println("Game Over");
@@ -1512,66 +1471,21 @@ public class Main extends SimpleApplication {
                     }
                     if(gameMenuActive) {
                         gameMenuActive = false;
-                        gameState.detachChild(gameMenu);
                     }
                 } else {
                     if(!gameMenuActive) {
                         gameMenuActive = true;
                         curGameMenuItem = GAMEMENU_CONTINUE;
-                        gameState.attachChild(gameMenu);
-                        
-                        if(gameOverFlag) {
-                            gameMenu.detachChild(pause);
-                            gameMenu.attachChild(gameOver);
-                        }
                     }
-                    fadeGame(tpf);
+                    fadeGame(tpf,true);
                 }
-                updateGameMenu();
                 break;
             case 4:
                 updateEndGame(tpf);
                 break;
         }
     }
-    public void updateGameMenu() {
-                    //BUTTON SCROLL CODE
-                    //Reset button positions
-                    if(curGameMenuItem != GAMEMENU_RETRY && pauseRetryIndent > 0) {
-                        retryButton.move(-buttonStep,0,0);
-                        pauseRetryIndent -= buttonStep;
-                    }
-                    if(curGameMenuItem != GAMEMENU_CONTINUE && pauseContinueIndent > 0) {
-                        continueButton.move(-buttonStep,0,0);
-                        pauseContinueIndent -= buttonStep;
-                    }
-                    if(curMainMenuItem != GAMEMENU_RETURN && pauseReturnIndent > 0) {
-                        returnButton.move(-buttonStep,0,0);
-                        pauseReturnIndent -= buttonStep;
-                    }
-                    //Indent whichever button is the current button
-                    switch(curGameMenuItem) {
-                        case GAMEMENU_RETRY:
-                            if(pauseRetryIndent < pauseButtonIndentation) {
-                                retryButton.move(buttonStep,0,0);
-                                pauseRetryIndent += buttonStep;
-                            }
-                            break;
-                        case GAMEMENU_CONTINUE:
-                            if(pauseContinueIndent < pauseButtonIndentation) {
-                                continueButton.move(buttonStep,0,0);
-                                pauseContinueIndent += buttonStep;
-                            }
-                            break;
-                        case GAMEMENU_RETURN:
-                            if(pauseReturnIndent < pauseButtonIndentation) {
-                                returnButton.move(buttonStep,0,0);
-                                pauseReturnIndent += buttonStep;
-                            }
-                            break;
-                    }
-                    //BUTTON SCROLL CODE END
-    }
+
     //Update methods, one for each state.
     public void updateOpenSplash(float tpf) {
             //Update code for opening splash.
@@ -1641,8 +1555,8 @@ public class Main extends SimpleApplication {
     public void updateGame(float tpf) {
         player.distance = player.getLocalTranslation().y;
         if(debug) {
-            cam.setLocation(new Vector3f(0, 200, 220));
-            cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Z);
+            cam.setLocation(new Vector3f(0, 100, 120));
+            cam.lookAt(Vector3f.ZERO.add(0,30,0), Vector3f.UNIT_Z);
         } else {
             cam.setLocation(camLoc.getPos());
             cam.lookAt(camFocalPoint.getLocalTranslation(), Vector3f.UNIT_Z);
@@ -1668,8 +1582,6 @@ public class Main extends SimpleApplication {
         camFocalPoint.update(tpf);
         camLoc.update(tpf);
         //Setting the positions for the hud elements.
-        gameMenu.setLocalTranslation(cam.getLocation().add(cam.getDirection().mult(4)));
-        gameMenu.lookAt(cam.getLocation(), Vector3f.UNIT_Z);
         dialogueNode.setLocalTranslation(cam.getLocation().add(cam.getDirection().mult(5)));
         dialogueNode.lookAt(cam.getLocation(), Vector3f.UNIT_Z);
 
@@ -1760,9 +1672,6 @@ public class Main extends SimpleApplication {
         StaticBullet currBullet;
         StaticBullet currShot;
 
-        //CollisionResults bulletToPlayer;
-        //CollisionResults bulletToGraze;
-
         while(bulletIterator.hasNext()) {
             try{
                 currBullet = (StaticBullet)bulletIterator.next();
@@ -1782,41 +1691,25 @@ public class Main extends SimpleApplication {
                                 currBullet.removeFromParent();
                                 currBullet.detachAllChildren();
                             }
-                        } catch(ClassCastException CCE) {
-
-                        }
+                        } catch(ClassCastException CCE) {}
                     }
                     
                     //Use distances instead of hitboxes.
-                    float dist = currBullet.getPos().distance(player.getPos());
-                    if(dist < player.getGrazeSize()+currBullet.getHitSize()) {
-                        graze += tpf * 300;
-                        if(dist < player.getHitSize() + currBullet.getHitSize()) {
-                            bulletIterator.remove();
-                            playerHit();
-                            currBullet.removeFromParent();
-                            currBullet.detachAllChildren();
+                    //Only check bullets within the play bounds
+                    if(currBullet.getPos().x > playerMaxSide || currBullet.getPos().x < -playerMaxSide || currBullet.getPos().y > playerMaxDistance || currBullet.getPos().y < playerMinDistance) {
+                        //Skip bullets outside of play bounds
+                    } else {
+                        float dist = currBullet.getPos().distance(player.getPos());
+                        if(dist < player.getGrazeSize()+currBullet.getHitSize()) {
+                            graze += tpf * 300;
+                            if(dist < player.getHitSize() + currBullet.getHitSize()) {
+                                bulletIterator.remove();
+                                playerHit();
+                                currBullet.removeFromParent();
+                                currBullet.detachAllChildren();
+                            }
                         }
                     }
-                    //OLD HITBOX CODE
-                    /*
-                    bulletToGraze = new CollisionResults();
-                    BoundingVolume btg = grazebox.getWorldBound();
-                    currBullet.collideWith(btg, bulletToGraze);
-                    if(bulletToGraze.size() > 0) {
-                        //If the bullet hit the grazebox check for collisions
-                        //  with the player hitbox
-                        graze++;
-                        bulletToPlayer = new CollisionResults();
-                        BoundingVolume btp = hitbox.getWorldBound();
-                        currBullet.collideWith(btp, bulletToPlayer);
-                        if (bulletToPlayer.size() > 0) {
-                            bulletIterator.remove();
-                            playerHit();
-                            currBullet.removeFromParent();
-                            currBullet.detachAllChildren();
-                        }
-                    }*/
                 }
             }catch(Exception ex) {}
         }
@@ -1824,9 +1717,6 @@ public class Main extends SimpleApplication {
         //Check player shot collisions with enemy.
         shotIterator = shotNode.getChildren().iterator();
         currBullet = null;
-
-        //CollisionResults shotToEnemy;
-
         while(shotIterator.hasNext()) {
             try{
                 currBullet = (StaticBullet)shotIterator.next();
@@ -1844,20 +1734,6 @@ public class Main extends SimpleApplication {
                         enemy.life -= 100*tpf;
                         System.out.println(enemy.life);
                     }
-                    //Old Hitbox Code
-                    /*
-                    shotToEnemy = new CollisionResults();
-                    BoundingVolume ste = enemyHitbox.getWorldBound();
-                    currBullet.collideWith(ste, shotToEnemy);
-                    if(shotToEnemy.size() > 0) {
-                        System.out.println("Enemy hit");
-                        enemy.life--;
-                        System.out.println(enemy.life);
-                        //shotIterator.remove();
-                        //currBullet.removeFromParent();
-                        //currBullet.detachAllChildren();
-                        //shotCount--;
-                    }*/
                 }
             } catch(Exception ex) {}
         }
@@ -1921,10 +1797,10 @@ public class Main extends SimpleApplication {
             playerAnimChan.setAnim("down",0.7f);
         }
         enemy.update(tpf);
-        enemy.lookAt(player.getLocalTranslation(), Vector3f.UNIT_Z);
     }
 
     public void updatePlayer(float tpf) {
+        player.lookAt(gameMouseLoc.add(0,0,100),Vector3f.UNIT_Z);
         if(heat < 100 && heatState != 0) {
             playerHeatEmitter.setParticlesPerSec(0);
             heatState = 0;
@@ -1942,10 +1818,21 @@ public class Main extends SimpleApplication {
             heatState = 3;
         }
         if(playerFocus) {
+            focusTimer += tpf*160;
+            if(focusTimer > focusLimit){
+                focusTimer = focusLimit;
+            }
+            playerFocusEmitter.setParticlesPerSec(Math.round(focusTimer));
+            
             heat += tpf*heatGainRate;
             player.turnSpeed = 0.5f;
             player.moveSpeed = 1;
         } else {
+            focusTimer -= tpf*400;
+            if(focusTimer < 0) {
+                focusTimer = 0;
+            }
+            playerFocusEmitter.setParticlesPerSec(Math.round(focusTimer));
             player.turnSpeed = 1.2f;
             player.moveSpeed = 25;
         }
@@ -1991,6 +1878,27 @@ public class Main extends SimpleApplication {
         playerHeatEmitter.move(0,0,2);
         player.attachChild(playerHeatEmitter);
         
+        playerFocusEmitter = new ParticleEmitter("playerFocusEmitter", ParticleMesh.Type.Triangle, 100);
+        Material focusEmitter = new Material(assetManager, "Common/MatDefs/Misc/Particle.j3md");
+        focusEmitter.setTexture("m_Texture", assetManager.loadTexture("Textures/game/particle/dashH.png"));
+        focusEmitter.getAdditionalRenderState().setBlendMode(BlendMode.Additive);
+        playerFocusEmitter.setQueueBucket(Bucket.Translucent);
+        playerFocusEmitter.setMaterial(focusEmitter);
+        playerFocusEmitter.setNumParticles(40);
+        playerFocusEmitter.setParticlesPerSec(0);
+        playerFocusEmitter.setImagesX(1); playerFocusEmitter.setImagesY(1);
+        playerFocusEmitter.setEndColor(new ColorRGBA(0.3f, 0f, 0f, 0.1f));   // red
+        playerFocusEmitter.setStartColor(new ColorRGBA(0.4f, 0.4f, 0.3f, 0.4f)); // yellow
+        playerFocusEmitter.getParticleInfluencer().setInitialVelocity(new Vector3f(0,0,70));
+        playerFocusEmitter.setStartSize(1);
+        playerFocusEmitter.setEndSize(0.2f);
+        playerFocusEmitter.setLowLife(0.1f);
+        playerFocusEmitter.setHighLife(0.2f);
+        playerFocusEmitter.setFacingVelocity(true);
+        playerFocusEmitter.getParticleInfluencer().setVelocityVariation(1);
+        playerFocusEmitter.move(0,0,0);
+        player.attachChild(playerFocusEmitter);
+        
         playerDeathEmitter = new ParticleEmitter("playerDeathEmitter", ParticleMesh.Type.Triangle, 10);
 
         Material deathParticle = new Material(assetManager, "Common/MatDefs/Misc/Particle.j3md");
@@ -2019,13 +1927,29 @@ public class Main extends SimpleApplication {
         player.attachChild(playerDeathEmitter);
     }
     
-    public void setUpEnemy() {
-        enemyModel = assetManager.loadModel("Models/game/enemy.j3o");
-        enemyMat = new Material(assetManager, "Materials/Unshaded.j3md");
-        enemyMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/hada01.png", false)));
+    public void setUpEnemy(int stage) {
+        switch(stage) {
+            case 1:
+                enemyModel = assetManager.loadModel("Models/game/enemy.j3o");
+                enemyMat = new Material(assetManager, "Materials/Unshaded.j3md");
+                enemyMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/hada01.png", false)));
+                break;
+            case 4:
+                enemyModel = assetManager.loadModel("Models/game/youmu.j3o");
+                enemyMat = new Material(assetManager, "Materials/Unshaded.j3md");
+                enemyMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/youmu.png", false)));
+                break;
+        }
         enemy.attachChild(enemyModel);
         enemy.setMaterial(enemyMat);
         enemy.scale(1f);
+        enemyAnimCont = enemyModel.getControl(AnimControl.class);
+        System.out.println(enemyAnimCont.getAnimationNames());
+        try {
+            enemyAnimCont.removeListener(enemyAnimListener);
+        } catch(Exception ex) {        }
+        enemyAnimCont.addListener(enemyAnimListener);
+        enemyAnimChan = enemyAnimCont.createChannel();
     }
     //----------------------------------------------------------------------------------
     //TIMELINE FLAGS
@@ -2114,63 +2038,12 @@ public class Main extends SimpleApplication {
         playerAnimChan.setLoopMode(LoopMode.DontLoop);
         playerAnimChan.setAnim("down");
         playerAnimChan.setSpeed(0.5f);
-
-        setUpEnemy();
-        enemyAnimCont = enemyModel.getControl(AnimControl.class);
-        try {
-            enemyAnimCont.removeListener(enemyAnimListener);
-        } catch(Exception ex) {
-
-        }
-
-        enemyAnimCont.addListener(enemyAnimListener);
-        enemyAnimChan = enemyAnimCont.createChannel();
-        enemyAnimChan.setAnim("up");
-        enemyAnimChan.setSpeed(0.5f);
-
-        //CREATE PLAYER HITBOX
-        /*
-        hitboxModel = assetManager.loadModel("Models/game/hitbox.j3o");
-        hitbox = new GameObject("hitbox");
-        hitboxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        hitboxMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/transp.png"));
-        hitboxMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
-        hitbox.setQueueBucket(Bucket.Transparent);
-        hitboxModel.setMaterial(hitboxMat);
-        hitbox.attachChild(hitboxModel.clone());
-        player.attachChild(hitbox);
-
-        //CREATE PLAYER GRAZE BOX
-        
-        grazeboxModel =assetManager.loadModel("Models/game/grazebox.j3o");
-        grazebox = new GameObject("grazebox");
-        grazeboxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        grazeboxMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/transp.png"));
-        grazeboxMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
-        grazebox.setQueueBucket(Bucket.Transparent);
-        grazeboxModel.setMaterial(grazeboxMat);
-        grazebox.attachChild(grazeboxModel);
-        grazebox.setCullHint(Spatial.CullHint.Always);
-        grazeboxModel.scale(2);
-        player.attachChild(grazebox);*/
-
+        setUpEnemy(1);
+       
         objectNode.attachChild(player);
-        //player.lookAt(player.getPos(),Vector3f.UNIT_Z.mult(-1));
-        player.rotate(FastMath.HALF_PI,0,0);
-        //CREATE ENEMY HIT BOX
-        //hitboxModel = assetManager.loadModel("Models/game/hitbox.j3o");
-        /*
-        enemyHitbox = new GameObject("enemyHitbox");
-
-        enemyHitboxMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        enemyHitboxMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/transp.png"));
-        enemyHitboxMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
-        enemyHitbox.setQueueBucket(Bucket.Transparent);
-        enemyHitbox.setMaterial(enemyHitboxMat);
-        enemyHitbox.attachChild(hitboxModel.clone());
-        enemy.attachChild(enemyHitbox);
-        */
+        playerModel.rotate(FastMath.HALF_PI,0,0);
         objectNode.attachChild(enemy);
+        
         enemy.setLocalTranslation(20,-60,0);
         enemy.moveTo(new Vector3f(0,0,0), 1f);
     }
@@ -2191,27 +2064,30 @@ public class Main extends SimpleApplication {
 
     //----------------------------------------------------------------------------------
     //----------------------------------------------------------------------------------
-    //boolean temp = false;
+    boolean temp = false;
     public void updateTimeline(float tpf) {
         if(!spellcardActive && advanceEventTime && !dialogueActive) {
             timer[T_EVENT_TIME] += tpf;
         }
-        if(timer[T_EVENT_TIME] > 0 && !spawnDone) {
+        if(!spawnDone) {
             spawn();
             System.out.println("Spawning");
             spawnDone = true;
             timer[T_INTRO_TIME] = 0;
             setBackgroundMusic("Sounds/stage1.ogg");
         }
+
         if(spawnDone && !introDone) {
+            cam.setFrustumFar(10000);
+            cam.setFrustumNear(1);
             advanceEventTime = false;
             introSequence(tpf);
         }
-        //if(!temp) {
-        //    timer[T_EVENT_TIME] = 43;
-        //    temp = true;
-        //}
-        
+        if(!temp) {
+            timer[T_EVENT_TIME] = 53;
+            temp = true;
+        }
+        /*
         if(timer[T_EVENT_TIME] > 3.2 && !dialogueFlag[1]) {
             say("There are idiots who would go out on a night like this?",1);
             System.out.println("Dialogue 1.");
@@ -2364,9 +2240,9 @@ public class Main extends SimpleApplication {
             say("Not bad right?",2);
             dialogueFlag[13] = true;
             gameFlag[STAGE3] = true;
-        }
+        }*/
 
-        if(timer[T_EVENT_TIME] > 54 && !gameFlag[STAGE4_0] && gameFlag[STAGE3]) {
+        if(timer[T_EVENT_TIME] > 54 && !gameFlag[STAGE4_0] /*&& gameFlag[STAGE3]*/) {
             stage4(tpf);
         }
 
@@ -2496,6 +2372,14 @@ public class Main extends SimpleApplication {
             introBannerAlpha = 1;
         } else if (introBannerAlpha < 0) {
             introBannerAlpha = 0;
+        }
+        if(timer[T_INTRO_TIME] < 2) {
+            screenFadeOverlayAlpha = 1;
+            screenFadeOverlayMat.setColor("m_Color", new ColorRGBA(0,0,0,screenFadeOverlayAlpha));
+            gameFaded = true;
+            gameUnfaded = false;
+        } else {
+            unfadeGame(tpf*0.1f, true);
         }
         if(debug) {
             timer[T_INTRO_TIME] = 10;
@@ -3079,15 +2963,11 @@ public class Main extends SimpleApplication {
             spellCircleCreated = false;
         }
     }
-
-    private void stage1spellL(float tpf) {
+    private void stageClear(float tpf, int stage, int stageflag) {
         spellcardActive = true;
-        updateSpellTimer(tpf, 1);/*
-        if(screenFadeOverlayAlpha > 0.5) {
-            fadeScreen(tpf);
-        }*/
+        updateSpellTimer(tpf, 1);
         if(!spellFlag[3]) {
-            System.out.println("Stage 1 Spell L");
+            System.out.println("Stage "+stage+" Spell L");
             spellFlag[3] = true;
         }
         if(spellTimer[0] > 0 && !gameFlag[52]) {
@@ -3097,17 +2977,17 @@ public class Main extends SimpleApplication {
             enemyDeathSequence();
         }
         if(spellTimer[0] > 1 && !gameFlag[50]) {
-            System.out.println("Stage 1 Closing");
+            System.out.println("Stage "+stage+" Closing");
             enemyDeathEmitter.emitAllParticles();
             enemyDeathEmitter.setParticlesPerSec(0);
             
             gameFlag[50] = true;
             gameFlag[GFLAG_SCORE] = true;
-            stageClearDisplay1.setText("STAGE 1 CLEAR");
+            stageClearDisplay1.setText("STAGE "+stage+" CLEAR");
         }
         if(spellTimer[0] > 4 && !gameFlag[51]) {
-            fadeGame(tpf);
-            if(stageClearDisplay1.getLocalTranslation().x < (screenWidth - 100)/2) {
+            fadeGame(tpf,false);
+            if(stageClearDisplay1.getLocalTranslation().x < (screenWidth)/2) {
                 stageClearDisplay1.move(7,0,0);
             }
             if(spellTimer[0] > 5) {
@@ -3127,14 +3007,17 @@ public class Main extends SimpleApplication {
         if(spellTimer[0] > 16) {
             spellFlag[SFLAG_SCORE] = true;
         }
-        if(spellFlag[SFLAG_SCORE] && !gameFlag[STAGE1_L]) {
+        if(spellFlag[SFLAG_SCORE] && !gameFlag[stageflag]) {
              resetCardVars();
              spellcardActive = false;
              gameFlag[GFLAG_SCORE] = false;
-             gameFlag[STAGE1_L] = true;
+             gameFlag[stageflag] = true;
         }
     }
-
+    private void stage1spellL(float tpf) {
+        stageClear(tpf, 1, STAGE1_L);
+    }
+    
     private void stage2(float tpf) {
         spellcardActive = true;
         updateSpellTimer(tpf, 2);
@@ -3615,7 +3498,7 @@ public class Main extends SimpleApplication {
                 }
             }
         }
-        closeSpell(STAGE2_3,60,50,tpf);
+        closeSpell(STAGE2_4,60,50,tpf);
     }
     
     int s2s5famCount = 12;
@@ -4050,57 +3933,7 @@ public class Main extends SimpleApplication {
     }
 
     private void stage2spellL(float tpf) {
-        spellcardActive = true;
-        updateSpellTimer(tpf, 1);/*
-        if(screenFadeOverlayAlpha > 0.5) {
-            fadeScreen(tpf);
-        }*/
-        if(!spellFlag[3]) {
-            System.out.println("Stage 2 Spell L");
-            spellFlag[3] = true;
-        }
-        if(spellTimer[0] > 0 && !gameFlag[52]) {
-            clearBullets();
-            gameFlag[52] = true;
-            enemyDeathSequence();
-        }
-        if(spellTimer[0] > 2 && !gameFlag[50]) {
-            System.out.println("Stage 2 Closing");
-            enemyDeathEmitter.emitAllParticles();
-            enemyDeathEmitter.setParticlesPerSec(0);
-            enemy.moveTo(Vector3f.ZERO, 5f);
-            gameFlag[50] = true;
-            gameFlag[GFLAG_SCORE] = true;
-            stageClearDisplay1.setText("STAGE 0 CLEAR");
-        }
-        if(spellTimer[0] > 4 && !gameFlag[51]) {
-            fadeGame(tpf);
-            if(stageClearDisplay1.getLocalTranslation().x < (screenWidth - 100)/2) {
-                stageClearDisplay1.move(7,0,0);
-            }
-            if(spellTimer[0] > 5) {
-                gameFlag[51] = true;
-            }
-        }
-        if((spellTimer[0] > 8 && !gameFlag[53])) {
-            if(stageClearDisplay1.getLocalTranslation().x > -screenWidth/2) {
-                stageClearDisplay1.move(-7,0,0);
-            }
-            if(spellTimer[0] > 8.7) {
-                gameFlag[53] = true;
-                spellFlag[SFLAG_ZWAIT] = true;
-                gameFlag[GFLAG_SCORE] = false;
-            }
-        }
-        if(spellTimer[0] > 16) {
-            spellFlag[SFLAG_SCORE] = true;
-        }
-        if(spellFlag[SFLAG_SCORE] && !gameFlag[STAGE2_L]) {
-             resetCardVars();
-             spellcardActive = false;
-             gameFlag[GFLAG_SCORE] = false;
-             gameFlag[STAGE2_L] = true;
-        }
+        stageClear(tpf,2,STAGE2_L);
     }
     private void stage3(float tpf) {
         spellcardActive = true;
@@ -4415,73 +4248,20 @@ public class Main extends SimpleApplication {
         closeSpell(STAGE3_6, 90, 150, tpf);
     }
     private void stage3spellL(float tpf) {
-        spellcardActive = true;
-        updateSpellTimer(tpf, 1);/*
-        if(screenFadeOverlayAlpha > 0.5) {
-            fadeScreen(tpf);
-        }*/
-        if(!spellFlag[3]) {
-            System.out.println("Stage 3 Spell L");
-            spellFlag[3] = true;
-        }
-        if(spellTimer[0] > 0 && !gameFlag[52]) {
-            clearBullets();
-            gameFlag[52] = true;
-            enemyDeathSequence();
-        }
-        if(spellTimer[0] > 2 && !gameFlag[50]) {
-            System.out.println("Stage 3 Closing");
-            enemyDeathEmitter.emitAllParticles();
-            enemyDeathEmitter.setParticlesPerSec(0);
-            enemy.moveTo(Vector3f.ZERO,6f);
-            gameFlag[50] = true;
-            gameFlag[GFLAG_SCORE] = true;
-            stageClearDisplay1.setText("STAGE 3 CLEAR");
-        }
-        if(spellTimer[0] > 4 && !gameFlag[51]) {
-            fadeGame(tpf);
-            if(stageClearDisplay1.getLocalTranslation().x < (screenWidth - 100)/2) {
-                stageClearDisplay1.move(7,0,0);
-            }
-            if(spellTimer[0] > 5) {
-                gameFlag[51] = true;
-            }
-        }
-        if((spellTimer[0] > 8 && !gameFlag[53])) {
-            if(stageClearDisplay1.getLocalTranslation().x > -screenWidth/2) {
-                stageClearDisplay1.move(-7,0,0);
-            }
-            if(spellTimer[0] > 8.7) {
-                gameFlag[53] = true;
-                spellFlag[SFLAG_ZWAIT] = true;
-                gameFlag[GFLAG_SCORE] = false;
-            }
-        }
-        if(spellTimer[0] > 16) {
-            spellFlag[SFLAG_SCORE] = true;
-        }
-        if(spellFlag[SFLAG_SCORE] && !gameFlag[STAGE3_L]) {
-             resetCardVars();
-             spellcardActive = false;
-             gameFlag[GFLAG_SCORE] = false;
-             gameFlag[STAGE3_L] = true;
-        }
+        stageClear(tpf, 3, STAGE3_L);
     }
     private void stage4(float tpf) {
         spellcardActive = true;
         updateSpellTimer(tpf, 2);
         if(!gameFlag[STAGE4_0_1]) {
-
             System.out.println("Stage 4 Start");
             enemy.detachChild(enemyModel);
-            portraitEnemyMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/enemyPortrait2.png"));
-            cutEnemyMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/enemyPortrait2.png"));
+            portraitEnemyMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/enemyPortrait4.png"));
+            cutEnemyMat.setTexture("m_ColorMap", assetManager.loadTexture("Textures/game/enemyPortrait4.png"));
             cutEnemyMat.setColor("m_Color", new ColorRGBA(1, 1, 1, cutEnemyAlpha));
-            enemyModel = assetManager.loadModel("Models/game/sakuya.j3o");
-            enemyMat = new Material(assetManager, "Materials/Unshaded.j3md");
-            enemyMat.setTexture("m_ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/sakuya.png", false)));
-            enemy.attachChild(enemyModel);
-            enemy.setMaterial(enemyMat);
+            setUpEnemy(4);
+            enemyAnimChan.setAnim("up",1);
+            enemy.rotate(0,0,FastMath.PI);
             enemy.moveTo(Vector3f.ZERO, 6f);
             gameFlag[STAGE4_0_1] = true;
         }
@@ -4492,7 +4272,84 @@ public class Main extends SimpleApplication {
         }
     }
     private void stage4spell1(float tpf){
-        openSpell(4,1,5,250,tpf);
+        openSpell(4,1,9,250,tpf);
+        if(!spellFlag[1]) {
+            enemyAnimChan.setAnim("spell",1);
+            enemy.moveTo(Vector3f.ZERO,3);
+            spellFlag[1] = true;
+        }
+        Vector3f target = new Vector3f();
+        Vector3f base = new Vector3f();
+        if(!spellFlag[2] && spellTimer[2] > 2.5) {
+            enemyAnimChan.setAnim("slash",0);
+            enemyAnimChan.setSpeed(0.8f);
+            enemyAnimChan.setLoopMode(LoopMode.DontLoop);
+            spellFlag[2] = true;
+        }
+        if(spellTimer[2] > 3) {
+            float randX = FastMath.nextRandomInt(0,20);
+            float randY = FastMath.nextRandomInt(140,180);
+            if(enemy.getX() < 0) {
+                randX += enemy.getX();
+            } else {
+                randX -= enemy.getX();
+            }
+            if(spellFlag[5]) {
+                randY = enemy.getY() + randY;
+            } else {
+                randY = enemy.getY() - randY;
+            }
+            spellFlag[5] = !spellFlag[5];
+            if(randX > 50) {
+                randX = 50;
+            }
+            if(randY > playerMaxDistance) {
+                randY = playerMaxDistance;
+            }
+            if(randX < -50) {
+                randX = -50;
+            }
+            if(randY < playerMinDistance) {
+                randY = playerMinDistance;
+            }
+            target = new Vector3f(randX,randY,0);
+            base = new Vector3f(enemy.getPos());
+            enemy.moveTo(target,3);
+            enemy.lookAt(target, Vector3f.UNIT_Z);
+            enemy.rotate(-FastMath.HALF_PI,0,0);
+            
+            spellFlag[2] = false;
+            spellTimer[2] = 0;
+            
+            Vector3f midpoint = new Vector3f((enemy.getX()*2 + randX)/3, (enemy.getY()*2 + randY)/3, 0);
+            for(int i = 0; i < 16; i++) {
+                if(spellFlag[3]) {
+                    fireStraightLine(midpoint, target, 1, i*0.1f - 0.8f, 49,  2, ARROWSHOT_T);
+                } else {
+                    fireStraightLine(midpoint, target, 1, i*0.1f - 0.8f, 49,  2, ARROWSHOT_P);
+                }
+                
+            }
+            spellFlag[3] = !spellFlag[3];
+        }
+        float dist = enemy.getDestination().distance(enemy.getPos());
+        if(dist > 5) {
+            if(spellTimer[3] > 0.03) {
+                for(int i = 0; i < dist/5; i++) {
+                    float offset = FastMath.nextRandomFloat()/3;
+                    if(spellFlag[5]) offset = -offset;
+                    int bulletType = ARROWSHOT_T;
+                    if(spellFlag[5]) bulletType = ARROWSHOT_P;
+                    fireSpeedShot(enemy.getPos(),enemy.getPos().add(1,offset,0),dist/20,1,5+Math.abs(offset)*15,1,bulletType);
+                    fireSpeedShot(enemy.getPos(),enemy.getPos().add(-1,offset,0),dist/20,1,5+Math.abs(offset)*15,1,bulletType);
+                }
+                spellTimer[3] = 0;
+            }
+        } 
+        closeSpell(STAGE4_1,60,150,tpf);
+    }
+    private void stage4spell2(float tpf){
+        openSpell(4,2,5,250,tpf);
         if(spellFlag[3]) {
             enemy.moveTo(60,0,0, 0.4f);
         } else {
@@ -4515,15 +4372,6 @@ public class Main extends SimpleApplication {
         if(spellTimer[2] > 0.3) {
             fireStraightShot(enemy.getPos(),player.getPos(),40,1,ARROWSHOT_G);
             spellTimer[2] = 0;
-        }
-        closeSpell(STAGE4_1,60,150,tpf);
-    }
-    private void stage4spell2(float tpf){
-        openSpell(4,2,5,250,tpf);
-        if(spellTimer[1] > 0.1) {
-            fireSpeedCircle(enemy.getPos(), 12, 1, spellTimer[T_SPELL_MAIN], 22,5,5,2, BALLSHOT_P);
-            fireSpeedCircle(enemy.getPos(), 12, 1, -spellTimer[T_SPELL_MAIN], 22,5,5, 2, BALLSHOT_P);
-            spellTimer[1] = 0;
         }
         closeSpell(STAGE4_2,60,150,tpf);
     }
@@ -4564,57 +4412,7 @@ public class Main extends SimpleApplication {
         closeSpell(STAGE4_6,60,150,tpf);
     }
     private void stage4spellL(float tpf) {
-        spellcardActive = true;
-        updateSpellTimer(tpf, 1);/*
-        if(screenFadeOverlayAlpha > 0.5) {
-            fadeScreen(tpf);
-        }*/
-        if(!spellFlag[3]) {
-            System.out.println("Stage 4 Spell L");
-            spellFlag[3] = true;
-        }
-        if(spellTimer[0] > 0 && !gameFlag[52]) {
-            clearBullets();
-            gameFlag[52] = true;
-            enemyDeathSequence();
-        }
-        if(spellTimer[0] > 2 && !gameFlag[50]) {
-            System.out.println("Stage 4 Closing");
-            enemyDeathEmitter.emitAllParticles();
-            enemyDeathEmitter.setParticlesPerSec(0);
-            enemy.moveTo(new Vector3f(50, -100, 0), 6f);
-            gameFlag[50] = true;
-            gameFlag[GFLAG_SCORE] = true;
-            stageClearDisplay1.setText("STAGE 4 CLEAR");
-        }
-        if(spellTimer[0] > 4 && !gameFlag[51]) {
-            fadeGame(tpf);
-            if(stageClearDisplay1.getLocalTranslation().x < (screenWidth - 100)/2) {
-                stageClearDisplay1.move(7,0,0);
-            }
-            if(spellTimer[0] > 5) {
-                gameFlag[51] = true;
-            }
-        }
-        if((spellTimer[0] > 8 && !gameFlag[53])) {
-            if(stageClearDisplay1.getLocalTranslation().x > -screenWidth/2) {
-                stageClearDisplay1.move(-7,0,0);
-            }
-            if(spellTimer[0] > 8.7) {
-                gameFlag[53] = true;
-                spellFlag[SFLAG_ZWAIT] = true;
-                gameFlag[GFLAG_SCORE] = false;
-            }
-        }
-        if(spellTimer[0] > 16) {
-            spellFlag[SFLAG_SCORE] = true;
-        }
-        if(spellFlag[SFLAG_SCORE] && !gameFlag[STAGE3_L]) {
-             resetCardVars();
-             spellcardActive = false;
-             gameFlag[GFLAG_SCORE] = false;
-             gameFlag[STAGE3_L] = true;
-        }
+        stageClear(tpf, 4, STAGE4_L);
     }
     private void enemyDeathSequence() {
         enemyDeathEmitter = new ParticleEmitter("enemyDeathEmitter", ParticleMesh.Type.Triangle, 50);
@@ -4665,11 +4463,11 @@ public class Main extends SimpleApplication {
 
     boolean gameFaded = false;
     boolean gameUnfaded = true;
-    private void fadeGame(float tpf) {
+    private void fadeGame(float tpf, boolean menu) {
         if(screenFadeOverlayAlpha < 0.9 && !gameFaded) {
-            screenFadeOverlayAlpha += tpf;
+            screenFadeOverlayAlpha += tpf*3;
             screenFadeOverlayMat.setColor("m_Color", new ColorRGBA(0,0,0,screenFadeOverlayAlpha));
-            fadePauseMenuIn(tpf);
+            if(menu)fadePauseMenuIn(tpf);
         }
         if(screenFadeOverlayAlpha >= 0.9) {
             screenFadeOverlayAlpha = 0.9f;
@@ -4677,11 +4475,11 @@ public class Main extends SimpleApplication {
             gameUnfaded = false;
         }
     }
-    private void unfadeGame(float tpf) {
+    private void unfadeGame(float tpf, boolean menu) {
         if(screenFadeOverlayAlpha > 0 && !gameUnfaded) {
-            screenFadeOverlayAlpha -= tpf;
+            screenFadeOverlayAlpha -= tpf*3;
             screenFadeOverlayMat.setColor("m_Color", new ColorRGBA(0,0,0,screenFadeOverlayAlpha));
-            fadePauseMenuOut(tpf);
+            if(menu)fadePauseMenuOut(tpf);
         }
         if(screenFadeOverlayAlpha <= 0) {
             screenFadeOverlayAlpha = 0;

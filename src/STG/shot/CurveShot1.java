@@ -28,25 +28,28 @@ import java.io.IOException;
 public class CurveShot1 implements Control {
     Spatial spatial;
     Vector3f direction1;
-    Vector3f direction2;
     Vector3f velocity;
     float speed;
     float angle;
     float turnRate;
+    float t1; //Time until curve starts
+    float t2; //Time until curve ends
+    private float lifetime; //total time lived
     boolean paused = false;
+    boolean right;
     
-    public CurveShot1(Spatial spatial, Vector3f src, Vector3f dir1, Vector3f dir2, float speed) {
+    public CurveShot1(Spatial spatial, Vector3f src, Vector3f dir1, boolean right, float turnRate, float t1, float t2,float speed) {
         this.spatial = spatial;
         this.spatial.setLocalTranslation(src);
         direction1 = new Vector3f(dir1);
         direction1.set(direction1.normalize());
-        direction2 = new Vector3f(dir2);
-        direction2.set(direction2.normalize());
-
-        if(direction1.x > 0) {
-            angle = -FastMath.acos(direction1.y);
+        this.right = right;
+        this.t1 = t1;
+        this.t2 = t2;
+        if(dir1.x > 0) {
+            angle = FastMath.atan(direction1.y/direction1.x);
         } else {
-            angle = FastMath.acos(direction1.y);
+            angle = FastMath.PI+FastMath.atan(direction1.y/direction1.x);
         }
         spatial.rotate(0,0,angle);
         this.speed = speed;
@@ -78,7 +81,16 @@ public class CurveShot1 implements Control {
 
     public void update(float tpf) {
         if(!paused) {
-            direction1.set(direction1.add(direction2.mult(tpf*3)).normalize());
+            lifetime += tpf;
+            if(lifetime < t2 && lifetime > t1) {
+                if(right) {
+                    angle += turnRate*tpf;
+                } else {
+                    angle -= turnRate*tpf;
+                }
+            }
+            direction1.x = FastMath.cos(angle);
+            direction1.y = FastMath.sin(angle);
             velocity = direction1.mult(speed).clone();
             spatial.move(velocity.mult(tpf));
         }

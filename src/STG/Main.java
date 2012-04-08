@@ -864,7 +864,7 @@ public class Main extends SimpleApplication {
         cutEnemy.scale(2);
         guiNode.attachChild(cutEnemy);
         
-        spellcardBannerModel = new Box(32,1024,1);
+        spellcardBannerModel = new Box(64,1024,1);
         spellcardBanner = new Geometry("spellcardBanner", spellcardBannerModel);
         spellcardBannerMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         Texture spellcardBannerTex = assetManager.loadTexture(new TextureKey("Textures/game/text/banner.png"));
@@ -1947,7 +1947,7 @@ public class Main extends SimpleApplication {
         System.out.println(enemyAnimCont.getAnimationNames());
         try {
             enemyAnimCont.removeListener(enemyAnimListener);
-        } catch(Exception ex) {        }
+        } catch(Exception ex) {}
         enemyAnimCont.addListener(enemyAnimListener);
         enemyAnimChan = enemyAnimCont.createChannel();
     }
@@ -2084,7 +2084,7 @@ public class Main extends SimpleApplication {
             introSequence(tpf);
         }
         if(!temp) {
-            timer[T_EVENT_TIME] = 53;
+            timer[T_EVENT_TIME] = 52.6f;
             temp = true;
         }
         /*
@@ -2240,9 +2240,9 @@ public class Main extends SimpleApplication {
             say("Not bad right?",2);
             dialogueFlag[13] = true;
             gameFlag[STAGE3] = true;
-        }*/
-
-        if(timer[T_EVENT_TIME] > 54 && !gameFlag[STAGE4_0] /*&& gameFlag[STAGE3]*/) {
+        }
+*/
+        if(timer[T_EVENT_TIME] > 54 && !gameFlag[STAGE4_0]) {
             stage4(tpf);
         }
 
@@ -2263,7 +2263,8 @@ public class Main extends SimpleApplication {
         }
 
         if(timer[T_EVENT_TIME] > 57 && !gameFlag[STAGE4_1]) {
-            stage4spell1(tpf);
+            //stage4spell1(tpf);
+            stage4spell4(tpf);
         }
         if(timer[T_EVENT_TIME] > 58 && !gameFlag[STAGE4_2]) {
             stage4spell2(tpf);
@@ -2676,15 +2677,15 @@ public class Main extends SimpleApplication {
             spellcard2_2 = true;
         }
         if(spellTimer[1] > 5 && !spellcard2_3) {
-            fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 26, 9.2f,1f);
+            fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 26, 9.2f,1f,1,TALISMAN_R);
             spellcard2_3 = true;
         }
         if(spellTimer[1] > 5.4 && !spellcard2_3_1) {
-            fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 26, 9.2f,1f);
+            fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 26, 9.2f,1f,1,TALISMAN_R);
             spellcard2_3_1 = true;
         }
         if(spellTimer[1] > 5.6 && !spellcard2_3_2) {
-            fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 26, 9.2f,1f);
+            fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 26, 9.2f,1f,1,TALISMAN_R);
             spellcard2_3_2 = true;
         }
         //Restart cycle
@@ -2732,7 +2733,7 @@ public class Main extends SimpleApplication {
 
         if(spellTimer[1] > 1.5 && !spellcard3_2) {
             spellcard3_2 = true;
-            fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 4, 8,2);
+            fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 4,0, 8,2,TALISMAN_R);
         }
         if(spellTimer[1] > 3 && !spellcard3_1) {
             fireStraightCircle(enemy.getLocalTranslation(),92,4,FastMath.nextRandomFloat(),35, 2f, 0);
@@ -4349,7 +4350,9 @@ public class Main extends SimpleApplication {
         closeSpell(STAGE4_1,60,150,tpf);
     }
     private void stage4spell2(float tpf){
-        openSpell(4,2,5,250,tpf);
+        openSpell(4,2,11,250,tpf);
+        
+        /*Poisonarms
         if(spellFlag[3]) {
             enemy.moveTo(60,0,0, 0.4f);
         } else {
@@ -4372,24 +4375,152 @@ public class Main extends SimpleApplication {
         if(spellTimer[2] > 0.3) {
             fireStraightShot(enemy.getPos(),player.getPos(),40,1,ARROWSHOT_G);
             spellTimer[2] = 0;
+        }*/
+
+        if(spellTimer[5] > 5 && !spellFlag[5]) {
+            spellFlag[5] = true;
+            spellTimer[5] = 0;
+        }
+        if(spellTimer[7] > 6 && !spellFlag[7]) {
+            spellFlag[7] = true;
+        }
+        enemy.setLocalTranslation(0,0,0);
+        if(spellTimer[6] > 0.05) {
+            fireCurveCircle1(enemy.getPos(), 8, 1, spellTimer[0]*0.1f, true, 1f, 1, 2+FastMath.nextRandomFloat()*2-1, 30, 1, BALLSHOT_B);
+            fireCurveCircle1(enemy.getPos(), 8, 1, spellTimer[0]*0.1f, false, 1f, 1, 2+FastMath.nextRandomFloat()*2-1, 30, 1, BALLSHOT_P);
+            spellTimer[6] = 0;
+        }
+        if(spellFlag[7]) {
+            if(spellTimer[8] > 2) {
+                fireCurveCircle1(enemy.getPos(), 32, 1, spellTimer[0], true, 1, 2,3, 25, 2, BALLSHOT_R);
+                fireCurveCircle1(enemy.getPos(), 32, 1, spellTimer[0], false, 1, 2,3, 25, 2, BALLSHOT_B);
+                spellTimer[8] = 0;
+            }
+            if(spellTimer[9] > 1) {
+                fireCurveCircle1(enemy.getPos(), FastMath.nextRandomInt(5,9), 1, FastMath.nextRandomFloat(), true, 2, 4,6,25, FastMath.nextRandomInt(4,6), BALLSHOT_R);
+                fireCurveCircle1(enemy.getPos(), FastMath.nextRandomInt(5,7), 1, FastMath.nextRandomFloat(), true, 2, 4,6, 25, FastMath.nextRandomInt(1,4), BALLSHOT_R);
+                spellTimer[9] = 0;
+            }
         }
         closeSpell(STAGE4_2,60,150,tpf);
     }
+    Vector3f targ;
     private void stage4spell3(float tpf){
         openSpell(4,3,5,250,tpf);
-        if(spellTimer[1] > 0.1) {
-            fireSpeedCircle(enemy.getPos(), 12, 1, spellTimer[T_SPELL_MAIN], 22,5,5, 1, KNIFE_K);
-            fireSpeedCircle(enemy.getPos(), 12, 1, -spellTimer[T_SPELL_MAIN], 22,5,5, 1, KNIFE_K);
-            spellTimer[1] = 0;
-        }
+        if(targ == null) {
+                targ = new Vector3f(0,100,0);
+            }
+            if(spellFlag[2]) {
+                if(spellTimer[2] < 3) {
+                    if(!spellFlag[4]) {
+                        enemy.moveTo(enemy.getX(),playerMinDistance, 0, 0.5f);
+                        spellFlag[4] = true;
+                    }
+                    if(spellTimer[3] > 0.3) {
+                        for(int i = 0; i < 10;i++) {
+                            int speed = 0;
+                            if(i >= 5) {
+                                speed = 5 - (i % 5) + 30;
+                            } else {
+                                speed = i % 5 + 30;
+                            }
+                            speed *= 0.7f;
+                            fireCurveShot1(enemy.getPos(), targ.add(targ.cross(Vector3f.UNIT_Z)), true, (0.3f+i*0.05f), 0,4, speed, 2, BALLSHOT_P);
+                            fireCurveShot1(enemy.getPos(), targ.add(targ.cross(Vector3f.UNIT_Z).mult(-1f)), false, (0.3f+i*0.05f), 0,4, speed, 2, BALLSHOT_P);
+                        }
+                        spellTimer[3] = 0;
+                    }
+                } else {
+                    spellFlag[2] = false;
+                    spellTimer[2] = 0;
+                    enemy.moveTo(player.getX(),0,0,1f);
+                }
+            }
+            if(!spellFlag[2] && spellTimer[2] > 1) {
+                spellFlag[2] = true;
+                spellTimer[2] = 0;
+                targ.set(player.getPos().subtract(enemy.getPos()).normalize().mult(50));
+            }
         closeSpell(STAGE4_3,60,150,tpf);
     }
+    GameObject s4s4familiar;
+    ParticleEmitter s4s4dashEmitter;
     private void stage4spell4(float tpf){
-        openSpell(4,4,5,250,tpf);
-        if(spellTimer[1] > 0.1) {
-            fireSpeedCircle(enemy.getPos(), 12, 1, spellTimer[T_SPELL_MAIN], 22,5,5, 1, KNIFE_K);
-            fireSpeedCircle(enemy.getPos(), 12, 1, -spellTimer[T_SPELL_MAIN], 22,5,5, 1, KNIFE_K);
-            spellTimer[1] = 0;
+        openSpell(4,4,11,250,tpf);
+        //Familiar shoots balls from top center
+        //enemy slashes back and forth, cutting bullets
+        //bullets in enemy path get split into several smaller bullets
+        int INIT = 1;
+        int FAM_BULLET_TIMER = 2;
+        int SLASH = 3;
+        int SIDE = 4;
+        int ANIM = 5;
+        if(!spellFlag[INIT]) {
+            s4s4familiar = new GameObject("s4s4familiar");
+            s4s4familiar.attachChild(ballShotW.clone().scale(2));
+            bulletNode.attachChild(s4s4familiar);
+            s4s4familiar.setPos(0,playerMinDistance,0);
+            spellFlag[INIT] = true;
+            enemy.moveTo(playerMaxSide,0,0, 4);
+            
+            s4s4dashEmitter = new ParticleEmitter("s4s4dashEmitter",ParticleMesh.Type.Triangle,600);
+            Material dashMat = new Material(assetManager,"Common/MatDefs/Misc/Particle.j3md");
+            dashMat.setTexture("m_Texture", assetManager.loadTexture("Textures/game/particle/dashH.png"));
+            s4s4dashEmitter.setMaterial(dashMat);
+            s4s4dashEmitter.setQueueBucket(Bucket.Translucent);
+            s4s4dashEmitter.setImagesX(1);
+            s4s4dashEmitter.setImagesY(1);
+            s4s4dashEmitter.setLowLife(0.1f);
+            s4s4dashEmitter.setHighLife(0.3f);
+            s4s4dashEmitter.setStartSize(1f);
+            s4s4dashEmitter.setEndSize(4f);
+            s4s4dashEmitter.setEndColor(new ColorRGBA(0.8f, 0.8f, 0.8f, 0.1f));   // red
+            s4s4dashEmitter.setStartColor(new ColorRGBA(0f, 0f, 1f, 1f)); // yellow
+            s4s4dashEmitter.setParticlesPerSec(0);
+            enemy.attachChild(s4s4dashEmitter);
+        }
+        if(spellTimer[FAM_BULLET_TIMER] > 0.08) {
+            fireStraightLine(s4s4familiar.getPos(), Vector3f.ZERO, 1,FastMath.nextRandomFloat()-0.5f,15,  FastMath.nextRandomInt(6,8),BALLSHOT_R, "s4s4ball");
+            spellTimer[FAM_BULLET_TIMER] = 0;
+        }
+        //3 seconds between slashes
+        if(!spellFlag[SLASH] && spellTimer[SLASH] > 3) {
+            spellFlag[SLASH] = true;
+            spellTimer[SLASH] = 0;     
+            spellFlag[ANIM] = false;
+            enemy.lookAt(Vector3f.ZERO, Vector3f.UNIT_Z);
+            enemy.rotate(-FastMath.HALF_PI,0,0);
+        }
+        if(spellTimer[SLASH] > 0.5f) {
+            s4s4dashEmitter.setParticlesPerSec(0);
+        }
+        if(spellTimer[SLASH] > 2.7f) {
+            if(!spellFlag[ANIM]) {
+            enemyAnimChan.setAnim("slash");
+            enemyAnimChan.setLoopMode(LoopMode.DontLoop);
+            spellFlag[ANIM] = true;
+            }
+        }
+        //Slash
+        if(spellFlag[SLASH]) {
+            s4s4dashEmitter.setParticlesPerSec(100);
+            
+            if(spellFlag[SIDE]) {
+                enemy.moveTo(playerMaxSide,0,0,6);
+            } else {
+                enemy.moveTo(-playerMaxSide,0,0,6);
+            }
+            Iterator bulletIterator = bulletNode.getChildren().iterator();
+            while(bulletIterator.hasNext()) {
+                GameObject curBullet = (GameObject) bulletIterator.next();
+                if((curBullet.getLocalTranslation().y < 15 && curBullet.getLocalTranslation().y > -15) && curBullet.getName().contains("s4s4ball")) {
+                    fireStraightCircle(curBullet.getPos(), 16, 1, 0, 21, FastMath.nextRandomInt(1,3), BALLSHOT_P);
+                    curBullet.detachAllChildren();
+                    curBullet.removeFromParent();
+                }
+            }
+            spellFlag[SIDE] = !spellFlag[SIDE];
+            spellFlag[SLASH] = false;
         }
         closeSpell(STAGE4_4,60,150,tpf);
     }
@@ -4579,28 +4710,47 @@ public class Main extends SimpleApplication {
         heat -= 200;
         shotNode.attachChild(sS);
     }
-    private void fireCurveShot1(Vector3f src, Vector3f initialVector, Vector3f finalVector, float speed, float scale, int type) {
+    private void fireCurveShot1(Vector3f src, Vector3f initialVector, boolean right, float tr, float t1, float t2,float speed, float scale, int type) {
         StaticBullet sS = new StaticBullet("bullet"+bulletCount++,50.5f);
-        if(type == TALISMAN_R) {
-            sS.attachChild(talismanR.clone());
-        } else if(type == TALISMAN_B) {
-            sS.attachChild(talismanW.clone());
-        } else if(type == BALLSHOT_W) {
-            sS.attachChild(ballShotW.clone());
-        } else if(type == BALLSHOT_R) {
-            sS.attachChild(ballShotR.clone());
-        } else if(type == BALLSHOT_B) {
-            sS.attachChild(ballShotB.clone());
-        } else if(type == BEAMSHOT_R) {
-            sS.attachChild(pillShotR.clone());
-        }
-
+        sS.attachChild(createBullet(type));
         sS.scale(scale);
         sS.setModelBound(new BoundingSphere(10.5f, Vector3f.ZERO));
-        CurveShot1 curve1Control = new CurveShot1(sS,src,initialVector,finalVector,speed);
+        CurveShot1 curve1Control = new CurveShot1(sS,src,initialVector,right, tr, t1, t2,speed);
         sS.addControl(curve1Control);
         bulletNode.attachChild(sS);
     }
+    private void fireCurveLine1(Vector3f src, Vector3f targ, int shotCount, float offset, boolean right, float tr, float t1, float t2, float speed, float scale, int type) {
+        Vector3f target = new Vector3f(targ);
+        Vector3f source = new Vector3f(src);
+        source.set(source.normalize());
+        target.set(target.normalize());
+        Vector3f aim = new Vector3f(targ.subtract(src).normalize());
+        float targAngle;
+        if(aim.x <= 0 && aim.y > 0) {
+            targAngle = FastMath.asin(aim.x);
+        } else if(aim.x > 0 && aim.y > 0) {
+            targAngle = FastMath.acos(aim.y);
+        } else if(aim.x < 0 && aim.y <= 0) {
+            targAngle = -FastMath.acos(aim.y);
+        } else {
+            targAngle = FastMath.PI-FastMath.asin(aim.x);
+        }
+
+        float angle = offset + targAngle;
+        for(int i = 0; i < shotCount; i++) {
+            target.set(new Vector3f(FastMath.sin(angle),FastMath.cos(angle),0));
+            target.set(target.normalize().add(src));
+            fireCurveShot1(src, target, right, tr, t1, t2, speed+i, scale, type);
+        }
+    }
+    private void fireCurveCircle1(Vector3f src, int lines, int shotCount, float offset, boolean right, float tr, float t1, float t2,  float speed, float scale, int type) {
+        float angle = 0;
+        for(int i = 0; i < lines; i++) {
+            angle = ((i+1)*(FastMath.TWO_PI/lines)) + offset;
+            fireCurveLine1(src, src.add(0,1,0), shotCount, angle, right, tr, t1, t2, speed, scale, type);
+        }
+    }
+    
     private void fireBendShot(Vector3f src, Vector3f targ, Vector3f targ2, float speed, float scale,int type) {
         StaticBullet sS = new StaticBullet("bullet"+bulletCount++,50.5f);
         sS.attachChild(createBullet(type));
@@ -4651,8 +4801,11 @@ public class Main extends SimpleApplication {
             fireS3S4Shot(src, target, speed+i, scale, type);
         }
     }
-    private void fireStraightShot(Vector3f src, Vector3f targ, float speed, float scale,int type) {
-        StaticBullet sS = new StaticBullet("bullet"+bulletCount++,50.5f);
+    private void fireStraightShot(Vector3f src, Vector3f targ, float speed, float scale, int type) {
+        fireStraightShot(src,targ,speed,scale,type,"");
+    }
+    private void fireStraightShot(Vector3f src, Vector3f targ, float speed, float scale,int type, String tag) {
+        StaticBullet sS = new StaticBullet(tag+"bullet"+bulletCount++,50.5f);
         sS.attachChild(createBullet(type));
         sS.scale(scale);
         sS.setModelBound(new BoundingSphere(10.5f, Vector3f.ZERO));
@@ -4727,10 +4880,10 @@ public class Main extends SimpleApplication {
             fireReflectLine(angleTarg, shotCount, speed,type);
         }
     }
-    private void fireStraightLine(Vector3f src, Vector3f targ, int shotCount, float speed, float scale) {
-        fireStraightLine(src, targ, shotCount, 0, speed, scale);
-    }
     private void fireStraightLine(Vector3f src, Vector3f targ, int shotCount, float offset, float speed, float scale, int type) {
+        fireStraightLine(src,targ,shotCount,offset,speed,scale,type,"");
+    }
+    private void fireStraightLine(Vector3f src, Vector3f targ, int shotCount, float offset, float speed, float scale, int type, String tag) {
         Vector3f target = new Vector3f(targ);
         Vector3f source = new Vector3f(src);
         source.set(source.normalize());
@@ -4751,18 +4904,17 @@ public class Main extends SimpleApplication {
         for(int i = 0; i < shotCount; i++) {
             target.set(new Vector3f(FastMath.sin(angle),FastMath.cos(angle),0));
             target.set(target.normalize().add(src));
-            fireStraightShot(src, target, speed+i, scale, type);
+            fireStraightShot(src, target, speed+i, scale, type,tag);
         }
     }
-
-    private void fireStraightLine(Vector3f src, Vector3f targ, int shotCount, float offset, float speed, float scale) {
-        fireStraightLine(src, targ, shotCount, offset, speed, scale, 0);
-    }
     private void fireStraightCircle(Vector3f src, int lines, int shotCount, float offset, float speed, float scale, int type) {
+        fireStraightCircle(src,lines,shotCount,offset,speed,scale,type,"");
+    }
+    private void fireStraightCircle(Vector3f src, int lines, int shotCount, float offset, float speed, float scale, int type, String tag) {
         float angle = 0;
         for(int i = 0; i < lines; i++) {
             angle = (i*(FastMath.TWO_PI/lines)) + offset;
-            fireStraightLine(src, src.add(0,1,0), shotCount, angle, speed, scale, type);
+            fireStraightLine(src, src.add(0,1,0), shotCount, angle, speed, scale, type, tag);
         }
     }
 

@@ -6,8 +6,8 @@ material enemyMat/TWOSIDE
 		pass
 		{
 			ambient 0.500000 0.500000 0.500000 1.000000
-			diffuse 0.400000 0.400000 0.400000 1.000000
-			emissive 0.600000 0.600000 0.600000 1.000000
+			diffuse 0.300000 0.300000 0.300000 1.000000
+			emissive 0.800000 0.800000 0.800000 1.000000
 			cull_hardware none
 			cull_software none
 			texture_unit
@@ -37,8 +37,8 @@ material enemyMat
 		pass
 		{
 			ambient 0.500000 0.500000 0.500000 1.000000
-			diffuse 0.400000 0.400000 0.400000 1.000000
-			emissive 0.600000 0.600000 0.600000 1.000000
+			diffuse 0.300000 0.300000 0.300000 1.000000
+			emissive 0.800000 0.800000 0.800000 1.000000
 			texture_unit
 			{
 				texture hada01.png

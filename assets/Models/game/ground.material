@@ -13,6 +13,7 @@ material groundMat/TWOSIDE
 			depth_write off
 			cull_hardware none
 			cull_software none
+			lighting off
 			texture_unit
 			{
 				texture groundTex.png
@@ -35,6 +36,7 @@ material groundMat
 			emissive 0.000000 0.000000 0.000000 0.000000
 			scene_blend alpha_blend
 			depth_write off
+			lighting off
 			texture_unit
 			{
 				texture groundTex.png

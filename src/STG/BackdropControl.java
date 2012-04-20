@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012 Adrian Micayabas <deepspace30@gmail.com>
+ * This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package STG;
 import com.jme3.export.JmeExporter;
 import com.jme3.export.JmeImporter;
@@ -26,6 +42,13 @@ public class BackdropControl implements Control {
     private float cycleLength;
     private float distanceMoved;
     private boolean enabled;
+    float timescale;
+    public void setTimescale(float ts) {
+        timescale = ts;
+    }
+    public float getTimescale() {
+        return timescale;
+    }
     public BackdropControl(Spatial spatial, int stage, float length, float speed, float timeOffset, float cycleLength) {
         this.spatial = spatial;
         this.stage = stage;
@@ -38,6 +61,7 @@ public class BackdropControl implements Control {
     }
 
     public void update(float tpf) {
+        tpf *= timescale;
         if(enabled) {
             spatial.move(0 , -tpf * speed, 0);
             cycleTime -= tpf;

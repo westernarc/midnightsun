@@ -1,6 +1,17 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2012 Adrian Micayabas <deepspace30@gmail.com>
+ * This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package STG;
@@ -23,6 +34,7 @@ public class GameObject extends Node {
     float targScale;
     float scaleSpeed;
 
+    boolean movingInto = false;
     public Vector3f getDestination() {
         return destination;
     }
@@ -46,8 +58,17 @@ public class GameObject extends Node {
         direction.y = com.jme3.math.FastMath.cos(this.angle);
     }
 
-    public void moveTo(Vector3f dest, float speed) {
+    //Moves through target
+    public void moveInto(Vector3f dest, float speed) {
         destination.set(dest);
+        movingInto = true;
+        direction = dest.subtract(getPos());
+        this.speed = speed;
+    }
+    
+    //Moves to target and slows down
+    public void moveTo(Vector3f dest, float speed) {
+        destination = dest;
         this.speed = speed;
     }
 
@@ -58,12 +79,16 @@ public class GameObject extends Node {
         this.targScale = targScale;
         scaleSpeed = speed;
     }
-
+    public Vector3f getDirection() {
+        return direction;
+    }
     public void clearDest() {
         destination.set(this.getLocalTranslation());
     }
     public void update(float time) {
-        direction = destination.subtract(this.getLocalTranslation());
+        if(!movingInto) {
+            direction = destination.subtract(this.getLocalTranslation());
+        }
         velocity = direction.mult(speed);
         if(this.getLocalTranslation().distance(destination) < 1) {
             clearDest();
@@ -75,6 +100,7 @@ public class GameObject extends Node {
         } else if (scaleDiff < 0.1) {
             scale -= scaleDiff*scaleSpeed;
         }
+        this.scale(1/scale);
     }
 
     public float getX() {

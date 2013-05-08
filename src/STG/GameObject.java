@@ -16,13 +16,17 @@
 
 package STG;
 
+import com.jme3.material.Material;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
+import com.jme3.scene.Spatial;
+import com.jme3.texture.Texture;
 
 /**
  *
  * @author Adrian
+ * Contains materials and models
  */
 public class GameObject extends Node {
     Vector3f direction;
@@ -35,6 +39,26 @@ public class GameObject extends Node {
     float scaleSpeed;
 
     boolean movingInto = false;
+    
+    protected Spatial model;
+    protected Material material;
+    
+    public Spatial getModel() {
+        return model;
+    }
+    public Material getMat() {
+        return material;
+    }
+
+    public void setModel(Spatial newModel) {
+        model = newModel;
+        this.attachChild(model);
+    }
+    public void setMat(Material newMaterial) {
+        material = newMaterial;
+        model.setMaterial(material);
+    }
+    
     public Vector3f getDestination() {
         return destination;
     }

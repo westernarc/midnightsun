@@ -15,6 +15,7 @@
  */
 package STG;
 
+import com.jme3.material.Material;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
 
@@ -24,25 +25,30 @@ import com.jme3.scene.Mesh;
  */
 public class GuiImage extends Geometry {
     private int width, height;
+    public Material mat;
 
     public GuiImage(String name, Mesh mesh) {
         super(name, mesh);
     }
-
     public void setWidth(int newWidth) {
         width = newWidth;
     }
     public void setHeight(int newHeight) {
         height = newHeight;
     }
-
+    public void setMat(Material mat) {
+        this.mat = mat;
+        setMaterial(this.mat);
+    }
+    public Material getMat() {
+        return mat;
+    }
     public int getWidth() {
         return width;
     }
     public int getHeight() {
         return height;
     }
-
     public float getX() {
         return getLocalTranslation().x;
     }

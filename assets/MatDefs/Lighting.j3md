@@ -176,7 +176,7 @@ MaterialDef Phong Lighting {
 
     Technique Glow {
 
-        VertexShader GLSL100:   Common/MatDefs/Misc/SimpleTextured.vert
+        VertexShader GLSL100:   MatDefs/SimpleTextured.vert
         FragmentShader GLSL100: Common/MatDefs/Light/Glow.frag
 
         WorldParameters {

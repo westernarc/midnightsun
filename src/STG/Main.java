@@ -179,7 +179,7 @@ public class Main extends SimpleApplication {
     STATE currentGameState;
     boolean advanceEventTime;   //Event line paused
     boolean spellcardActive;    //Stores whether a spellcard is active
-    boolean debug = false; //skips to game
+    boolean debug = true; //skips to game
     boolean mute = false; //mutes
     boolean gamePause = false;      //Stores whether game paused
     boolean gameOverFlag = false;   //Stores whether game over
@@ -1424,6 +1424,7 @@ public class Main extends SimpleApplication {
                 //  it looks terrible as it is.
 
             case MAINMENU://State == 1 : The main menu screen state.
+                handleMainMenuMouse(tpf);
                 if(stateFade) {
                     stateFade = false;
                     fadeFilter.fadeIn();
@@ -2015,6 +2016,12 @@ public class Main extends SimpleApplication {
                 enemyModel = assetManager.loadModel("Models/game/youmu.j3o");
                 enemyMat = new Material(assetManager, "MatDefs/Unshaded.j3md");
                 enemyMat.setTexture("ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/youmu.png", false)));
+                /*
+                 * enemy lighting material
+                enemyMat = new Material(assetManager, "MatDefs/Lighting.j3md");
+                enemyMat.setTexture("m_DiffuseMap", assetManager.loadTexture(new TextureKey("Textures/game/youmu.png", false)));
+                enemyMat.setTexture("m_GlowMap", assetManager.loadTexture(new TextureKey("Textures/game/youmu.png", false)));
+                enemyMat.setColor("m_GlowColor", new ColorRGBA(20,150,20,0.3f));*/
                 break;
         }
         enemy.attachChild(enemyModel);
@@ -2175,9 +2182,9 @@ public class Main extends SimpleApplication {
             introSequence(tpf);
         }
         if(!temp) {
-            timer[T_EVENT_TIME] = 0f;
+            timer[T_EVENT_TIME] = 49f;
             temp = true;
-        }
+        }/*
         if(timer[T_EVENT_TIME] > 3.2 && !dialogueFlag[1]) {
             gameFlag[GFLAG_MOVE_ENABLED] = true;
             say("There are idiots who would go out on a night like this?",1);
@@ -2269,7 +2276,7 @@ public class Main extends SimpleApplication {
         if(timer[T_EVENT_TIME] > 34 && !gameFlag[STAGE2_6]) {
             stage2spell6(tpf);
         }
-        if(timer[T_EVENT_TIME] > 34 && !gameFlag[STAGE2_L]) {
+        if(timer[T_EVENT_TIME] > 34 && gameFlag[STAGE2_6] && !gameFlag[STAGE2_L]) {
             stage2spellL(tpf);
         }
         if(timer[T_EVENT_TIME] > 36 && !dialogueFlag[10]) {
@@ -2331,7 +2338,7 @@ public class Main extends SimpleApplication {
             say("Not bad right?",1);
             dialogueFlag[16] = true;
             gameFlag[STAGE3] = true;
-        }
+        }*/
 
         if(timer[T_EVENT_TIME] > 49 && !gameFlag[STAGE4_0]) {
             stage4(tpf);
@@ -2354,7 +2361,7 @@ public class Main extends SimpleApplication {
         }
 
         if(timer[T_EVENT_TIME] > 55 && !gameFlag[STAGE4_1]) {
-            stage4spell1(tpf);
+            stage4spell4(tpf);
         }
         if(timer[T_EVENT_TIME] > 56 && !gameFlag[STAGE4_2]) {
             stage4spell2(tpf);
@@ -2774,6 +2781,8 @@ public class Main extends SimpleApplication {
                 if(colorSwitch == BULLET.TALISMAN_R) {
                     colorSwitch = BULLET.TALISMAN_W;
                 } else if(colorSwitch == BULLET.TALISMAN_W) {
+                    colorSwitch = BULLET.TALISMAN_R;
+                } else {
                     colorSwitch = BULLET.TALISMAN_R;
                 }
             spellcard2_1 = true;
@@ -3929,14 +3938,14 @@ public class Main extends SimpleApplication {
             spellcardBanner(1/60f);
         }
         createSpellCircle(stage);
-        spellCircle.rotate(0,0,1/60f);
+        
         if(spellCircleAlpha < 0.4f) { 
             spellCircleAlpha += 1/60f;
             spellCircleMat.setColor("Color", new ColorRGBA(1,1,1, spellCircleAlpha));
         }
         
         spellCircle.rotate(0,0,tpf);
-        updateSpellTimer(1/60f, vars);
+        updateSpellTimer(tpf, vars);
         
         if(!spellFlag[0]) {
             timescale = 1;
@@ -4217,6 +4226,7 @@ public class Main extends SimpleApplication {
             enemy.moveTo(Vector3f.ZERO, 6f);
             gameFlag[STAGE4_0_1] = true;
         }
+        
         if(spellTimer[0] > 3 && !gameFlag[STAGE4_0]) {
             spellcardActive = false;
             gameFlag[STAGE4_0] = true;
@@ -4233,16 +4243,13 @@ public class Main extends SimpleApplication {
         Vector3f target = new Vector3f();
         Vector3f base = new Vector3f();
         if(!spellFlag[2] && spellTimer[2] > 2.5) {
-            enemyAnimChan.setAnim("slash",0);
-            enemyAnimChan.setSpeed(0.8f);
+            enemyAnimChan.setAnim("slash",1);
             enemyAnimChan.setLoopMode(LoopMode.DontLoop);
             spellFlag[2] = true;
             timescale = 0.3f;
-            enemyAnimChan.setSpeed(0.07f);
         }
-        if(spellTimer[2] > 3) {
+        if(enemyAnimChan.getTime() > 1.3f && spellTimer[2] > 2.5) {
             timescale = 1f;
-            enemyAnimChan.setSpeed(1f);
             float randX = FastMath.nextRandomInt(0,20);
             float randY = FastMath.nextRandomInt(140,180);
             if(enemy.getX() < 0) {
@@ -4258,16 +4265,15 @@ public class Main extends SimpleApplication {
             spellFlag[5] = !spellFlag[5];
             if(randX > 50) {
                 randX = 50;
+            } else if(randX < -50) {
+                randX = -50;
             }
             if(randY > playerMaxDistance) {
                 randY = playerMaxDistance;
-            }
-            if(randX < -50) {
-                randX = -50;
-            }
-            if(randY < playerMinDistance) {
+            } else if(randY < playerMinDistance) {
                 randY = playerMinDistance;
             }
+            
             target = new Vector3f(randX,randY,0);
             base = new Vector3f(enemy.getPos());
             enemy.moveTo(target,3);
@@ -4308,6 +4314,9 @@ public class Main extends SimpleApplication {
             spellTimer[5] = 0;
         }*/
         closeSpell(STAGE4_1,60,150,tpf);
+        if(gameFlag[STAGE4_1]) {
+            timescale = 1;
+        }
     }
     private void stage4spell2(float tpf){
         openSpell(4,2,11,250,tpf);
@@ -4343,8 +4352,9 @@ public class Main extends SimpleApplication {
         if(spellTimer[7] > 6 && !spellFlag[7]) {
             spellFlag[7] = true;
         }
-        enemy.setLocalTranslation(0,0,0);
-        if(spellTimer[6] > 0.05) {
+        enemy.moveTo(0,0,0,3);
+        
+        if(spellTimer[6] > 0.05 && enemy.getPos().length() < 5) {
             fireCurveCircle1(enemy.getPos(), 8, 1, spellTimer[0]*0.1f, true, 1f, 1, 2+FastMath.nextRandomFloat()*2-1, 30, 1, BULLET.BALLSHOT_B);
             fireCurveCircle1(enemy.getPos(), 8, 1, spellTimer[0]*0.1f, false, 1f, 1, 2+FastMath.nextRandomFloat()*2-1, 30, 1, BULLET.BALLSHOT_P);
             spellTimer[6] = 0;
@@ -4422,13 +4432,14 @@ public class Main extends SimpleApplication {
         int SLASH = 3;
         int SIDE = 4;
         int ANIM = 5;
+        
         if(!spellFlag[INIT]) {
             s4s4familiar = new GameObject("s4s4familiar");
             s4s4familiar.attachChild(ballShotW.clone().scale(2));
-            bulletNode.attachChild(s4s4familiar);
+            //bulletNode.attachChild(s4s4familiar);
             s4s4familiar.setPos(0,playerMinDistance,0);
             spellFlag[INIT] = true;
-            enemy.moveTo(playerMaxSide,0,0, 4);
+            enemy.moveTo(playerMaxSide, 0, 0, 4);
             
             s4s4dashEmitter = new ParticleEmitter("s4s4dashEmitter",ParticleMesh.Type.Triangle,600);
             Material dashMat = new Material(assetManager,"MatDefs/Particle.j3md");
@@ -4446,17 +4457,18 @@ public class Main extends SimpleApplication {
             s4s4dashEmitter.setParticlesPerSec(0);
             enemy.attachChild(s4s4dashEmitter);
         }
+        
         if(spellTimer[FAM_BULLET_TIMER] > 0.08) {
             fireStraightLine(s4s4familiar.getPos(), Vector3f.ZERO, 1,FastMath.nextRandomFloat()-0.5f,15,  FastMath.nextRandomInt(6,8), BULLET.BALLSHOT_R, "s4s4ball");
             spellTimer[FAM_BULLET_TIMER] = 0;
         }
+        
         //3 seconds between slashes
-        if(!spellFlag[SLASH] && spellTimer[SLASH] > 3) {
+        if(!spellFlag[SLASH] && spellTimer[SLASH] > 2.7f && enemyAnimChan.getTime() > 1.3f && spellFlag[ANIM]) {
             spellFlag[SLASH] = true;
             spellTimer[SLASH] = 0;     
             spellFlag[ANIM] = false;
             enemy.lookAt(Vector3f.ZERO, Vector3f.UNIT_Z);
-            timescale = 1;
             enemyAnimChan.setSpeed(1f);
         }
         if(spellTimer[SLASH] > 0.5f) {
@@ -4468,13 +4480,13 @@ public class Main extends SimpleApplication {
             enemyAnimChan.setLoopMode(LoopMode.DontLoop);
             spellFlag[ANIM] = true;
             timescale = 0.1f;
-            enemyAnimChan.setSpeed(0.1f);
+            //enemyAnimChan.setSpeed(0.1f);
             }
         }
         //Slash
         if(spellFlag[SLASH]) {
             s4s4dashEmitter.setParticlesPerSec(100);
-            
+            timescale = 1;
             if(spellFlag[SIDE]) {
                 enemy.moveTo(playerMaxSide,0,0,6);
             } else {
@@ -4493,6 +4505,11 @@ public class Main extends SimpleApplication {
             spellFlag[SLASH] = false;
         }
         closeSpell(STAGE4_4,60,150,tpf);
+        if(gameFlag[STAGE4_4]) {
+            timescale = 1;
+            s4s4dashEmitter.removeFromParent();
+            s4s4dashEmitter.setParticlesPerSec(0);
+        }
     }
     GameObject s4s5familiar;
     ParticleEmitter s4s5emitter;
@@ -4830,7 +4847,7 @@ public class Main extends SimpleApplication {
 
     private void updateSpellTimer(float tpf, int count) {
         for(int i = 0; i < count; i++) {
-            spellTimer[i] += 1/60f;
+            spellTimer[i] += tpf;
         }
     }
     private Spatial createBullet(BULLET type){
@@ -5444,7 +5461,7 @@ public class Main extends SimpleApplication {
     public void handleMainMenuMouse(float tpf) {
         Vector3f origin    = cam.getWorldCoordinates(inputManager.getCursorPosition(), 0.0f);
         Vector3f direction = cam.getWorldCoordinates(inputManager.getCursorPosition(), 0.3f);
-        System.out.println(inputManager.getCursorPosition());
+
         direction.subtractLocal(origin).normalizeLocal();
         String activeItem = new String();
         Ray ray = new Ray(origin, direction);

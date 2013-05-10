@@ -1,0 +1,143 @@
+material mat.002
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			ambient 1.000000 1.000000 1.000000 1.000000
+			diffuse 0.100000 0.100000 0.100000 1.000000
+			emissive 0.800000 0.800000 0.800000 1.000000
+			texture_unit
+			{
+				texture yuyuko.png
+				tex_address_mode wrap
+				filtering trilinear
+				colour_op modulate
+			}
+		}
+		pass
+		{
+			ambient 0.0 0.0 0.0
+			diffuse 0.0 0.0 0.0
+			specular 0.000000 0.000000 0.000000 1.000000 12.500000
+			scene_blend add
+		}
+	}
+}
+material mat.001
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			ambient 1.000000 1.000000 1.000000 1.000000
+			diffuse 0.100000 0.100000 0.100000 1.000000
+			emissive 0.800000 0.800000 0.800000 1.000000
+			texture_unit
+			{
+				texture yuyuko.png
+				tex_address_mode wrap
+				filtering trilinear
+				colour_op modulate
+			}
+		}
+		pass
+		{
+			ambient 0.0 0.0 0.0
+			diffuse 0.0 0.0 0.0
+			specular 0.000000 0.000000 0.000000 1.000000 12.500000
+			scene_blend add
+		}
+	}
+}
+material mat.001/TWOSIDE
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			ambient 1.000000 1.000000 1.000000 1.000000
+			diffuse 0.100000 0.100000 0.100000 1.000000
+			emissive 0.800000 0.800000 0.800000 1.000000
+			cull_hardware none
+			cull_software none
+			texture_unit
+			{
+				texture yuyuko.png
+				tex_address_mode wrap
+				filtering trilinear
+				colour_op modulate
+			}
+		}
+		pass
+		{
+			ambient 0.0 0.0 0.0
+			diffuse 0.0 0.0 0.0
+			specular 0.000000 0.000000 0.000000 1.000000 12.500000
+			scene_blend add
+			cull_hardware none
+			cull_software none
+		}
+	}
+}
+material mat
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			ambient 1.000000 1.000000 1.000000 1.000000
+			diffuse 0.100000 0.100000 0.100000 1.000000
+			emissive 0.800000 0.800000 0.800000 1.000000
+			texture_unit
+			{
+				texture yuyuko.png
+				tex_address_mode wrap
+				filtering trilinear
+				colour_op modulate
+			}
+		}
+		pass
+		{
+			ambient 0.0 0.0 0.0
+			diffuse 0.0 0.0 0.0
+			specular 0.000000 0.000000 0.000000 1.000000 12.500000
+			scene_blend add
+		}
+	}
+}
+material mat/TWOSIDE
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			ambient 1.000000 1.000000 1.000000 1.000000
+			diffuse 0.100000 0.100000 0.100000 1.000000
+			emissive 0.800000 0.800000 0.800000 1.000000
+			cull_hardware none
+			cull_software none
+			texture_unit
+			{
+				texture yuyuko.png
+				tex_address_mode wrap
+				filtering trilinear
+				colour_op modulate
+			}
+		}
+		pass
+		{
+			ambient 0.0 0.0 0.0
+			diffuse 0.0 0.0 0.0
+			specular 0.000000 0.000000 0.000000 1.000000 12.500000
+			scene_blend add
+			cull_hardware none
+			cull_software none
+		}
+	}
+}

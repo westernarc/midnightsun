@@ -40,6 +40,7 @@ import com.jme3.collision.CollisionResults;
 import com.jme3.effect.ParticleEmitter;
 import com.jme3.effect.ParticleMesh;
 import com.jme3.effect.shapes.EmitterBoxShape;
+import com.jme3.font.BitmapFont;
 import com.jme3.font.BitmapFont.Align;
 import com.jme3.font.BitmapText;
 import com.jme3.font.Rectangle;
@@ -179,7 +180,8 @@ public class Main extends SimpleApplication {
     STATE currentGameState;
     boolean advanceEventTime;   //Event line paused
     boolean spellcardActive;    //Stores whether a spellcard is active
-    boolean debug = true; //skips to game
+    boolean stageActive;        //Like spellcardActive, but only for stagen_0
+    boolean debug = false; //skips to game
     boolean mute = false; //mutes
     boolean gamePause = false;      //Stores whether game paused
     boolean gameOverFlag = false;   //Stores whether game over
@@ -546,7 +548,7 @@ public class Main extends SimpleApplication {
             music = new AudioNode(assetManager, file, false);
             music.setLooping(true);
             rootNode.attachChild(music);
-            music.setVolume(0.5f);
+            music.setVolume(0f);
             music.play();
         } catch(Exception ex) {}
         }
@@ -567,8 +569,9 @@ public class Main extends SimpleApplication {
         //Moving Camera
         cam.setLocation(new Vector3f(0f,0f,15f));
         cam.setRotation(Quaternion.IDENTITY);
-        cam.lookAt(new Vector3f(0f,0f,0f), Vector3f.UNIT_Z);
+        cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Z);
         mainMenuState = new StateNode("mainMenuNode");
+        mainMenuState.detachAllChildren();
         setBackgroundMusic("Sounds/menu.ogg");
         titleAlpha = new float[9];
 
@@ -578,6 +581,7 @@ public class Main extends SimpleApplication {
         titleBackground.getMat().setTexture("ColorMap", assetManager.loadTexture("Textures/mainMenu/frame1.png"));
         //titleBackgroundMat.getAdditionalRenderState().setBlendMode(BlendMode.Off);
         titleBackground.getMat().getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
+        titleBackground.setLocalTranslation(0,0,0);
         titleBackground.move(0,0,-8f);
         titleUIElements = new Node("titleUIElements");
         titleUIElements.move(0,-2,0);
@@ -632,7 +636,7 @@ public class Main extends SimpleApplication {
         sun.setColor(ColorRGBA.White.clone().multLocal(2));
         //mainMenuState.addLight(mainMenuLight);
         mainMenuState.addLight(sun);
-        cam.lookAt(mainMenuState.getLocalTranslation(),Vector3f.UNIT_Y);
+        //cam.lookAt(mainMenuState.getLocalTranslation(),Vector3f.UNIT_Y);
         rootNode.attachChild(mainMenuState);
 
         initMainMenuBindings();
@@ -940,11 +944,11 @@ public class Main extends SimpleApplication {
             dialogueFlag[i] = false;
         }
         spellcardActive = false;
+        stageActive = false;
         advanceEventTime = false;
 
         introDone = false;
         //Spellcard vars
-        spellcardActive = false;
         squareCreated = false;
         resetCardVars();
         try {
@@ -1124,8 +1128,10 @@ public class Main extends SimpleApplication {
         guiFont = assetManager.loadFont("Textures/font/DroidSans.fnt");
 
         dialogue = new BitmapText(guiFont,false);
-        dialogue.setSize(guiFont.getCharSet().getRenderedSize()* 0.5f);
-        dialogue.setLocalTranslation(screenWidth / 4, dialogue.getLineHeight(), 0);
+        dialogue.setSize(guiFont.getCharSet().getRenderedSize() * 0.5f);
+        //dialogue.setLocalTranslation(screenWidth / 2, dialogue.getLineHeight(), 0);
+        dialogue.setBox(new Rectangle(0,0,screenWidth,dialogue.getLineHeight()));
+        dialogue.setAlignment(BitmapFont.Align.Center);
         guiNode.attachChild(dialogue);
 
         player.setLife(player.MAX_LIFE);
@@ -1228,7 +1234,7 @@ public class Main extends SimpleApplication {
         guiNode.attachChild(stageClearDisplay1);*/
 
         //Set up Intro Banner
-        introBannerModel = new Box(60 / windowScale, 120 / windowScale,0);
+        introBannerModel = new Box(120 / windowScale, 60 / windowScale,0);
         introBanner = new GuiImage("introBanner", introBannerModel);
         introBannerMat = new Material(assetManager, "MatDefs/Unshaded.j3md");
         introBannerMat.setTexture("ColorMap", assetManager.loadTexture("Textures/game/introbanner.png"));
@@ -1236,7 +1242,7 @@ public class Main extends SimpleApplication {
         introBanner.setMaterial(introBannerMat);
         introBannerAlpha = 0;
         introBannerMat.setColor("Color", new ColorRGBA(1, 1, 1, introBannerAlpha));
-        introBanner.setLocalTranslation(screenWidth - 250 / windowScale, (400 / windowScale),0);
+        introBanner.setLocalTranslation(screenWidth - 450 / windowScale, (350 / windowScale),0);
         try {guiNode.detachChildNamed("introBanner");} catch(Exception ex){}
         guiNode.attachChild(introBanner);
         try {
@@ -1527,6 +1533,9 @@ public class Main extends SimpleApplication {
     //scrolling: 0: title, 1: start, 2: end
     public void updateMainMenu(float tpf) {
         timer[T_MAINMENU_TIME] += 1/60f;
+        cam.setLocation(new Vector3f(0f,0f,15f));
+        cam.setRotation(Quaternion.IDENTITY);
+        cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Z);
         if(timer[T_MAINMENU_TIME] < 1.4f) {
             updateMainMenuFlags = new boolean[9];
             for(int i = 0; i < 9; i++) {
@@ -1835,6 +1844,10 @@ public class Main extends SimpleApplication {
             MOVE_STAND = true;
             playerAnimChan.setAnim("down",0.7f);
         }
+        //Reset animation manually
+        if(playerAnimChan.getTime() >= 0.4) {
+            playerAnimChan.setTime(0);
+        }
         try {
             if(timescale != 1) {
                 Iterator bulletIterator = bulletNode.getChildren().iterator();
@@ -2023,6 +2036,11 @@ public class Main extends SimpleApplication {
                 enemyMat.setTexture("m_GlowMap", assetManager.loadTexture(new TextureKey("Textures/game/youmu.png", false)));
                 enemyMat.setColor("m_GlowColor", new ColorRGBA(20,150,20,0.3f));*/
                 break;
+            case 5:
+                enemyModel = assetManager.loadModel("Models/game/yuyuko.j3o");
+                enemyMat = new Material(assetManager, "MatDefs/Unshaded.j3md");
+                enemyMat.setTexture("ColorMap", assetManager.loadTexture(new TextureKey("Textures/game/yuyuko.png", false)));
+                break;
         }
         enemy.attachChild(enemyModel);
         enemy.setMaterial(enemyMat);
@@ -2097,6 +2115,50 @@ public class Main extends SimpleApplication {
     final int STAGE4_6 = 37;
     final int STAGE4_L = 38;
     
+    final int STAGE5 = 39;
+    final int STAGE5_0 = 40;
+    final int STAGE5_0_1 = 41;
+    final int STAGE5_1 = 42;
+    final int STAGE5_2 = 43;
+    final int STAGE5_3 = 44;
+    final int STAGE5_4 = 45;
+    final int STAGE5_5 = 46;
+    final int STAGE5_6 = 47;
+    final int STAGE5_L = 48;
+    
+    final int STAGE6 = 49;
+    final int STAGE6_0 = 50;
+    final int STAGE6_0_1 = 51;
+    final int STAGE6_1 = 52;
+    final int STAGE6_2 = 53;
+    final int STAGE6_3 = 54;
+    final int STAGE6_4 = 55;
+    final int STAGE6_5 = 56;
+    final int STAGE6_6 = 57;
+    final int STAGE6_L = 58;
+    
+    final int STAGE7 = 59;
+    final int STAGE7_0 = 60;
+    final int STAGE7_0_1 = 61;
+    final int STAGE7_1 = 62;
+    final int STAGE7_2 = 63;
+    final int STAGE7_3 = 64;
+    final int STAGE7_4 = 65;
+    final int STAGE7_5 = 66;
+    final int STAGE7_6 = 67;
+    final int STAGE7_L = 68;
+    
+    final int STAGE8 = 69;
+    final int STAGE8_0 = 70;
+    final int STAGE8_0_1 = 71;
+    final int STAGE8_1 = 72;
+    final int STAGE8_2 = 73;
+    final int STAGE8_3 = 74;
+    final int STAGE8_4 = 75;
+    final int STAGE8_5 = 76;
+    final int STAGE8_6 = 77;
+    final int STAGE8_L = 78;
+    
     final static int GFLAG_MOVE_ENABLED = 40;
     
     float spellTimer[] = new float[varCount];
@@ -2134,7 +2196,7 @@ public class Main extends SimpleApplication {
         playerAnimChan.setAnim("down");
         playerAnimChan.setSpeed(0.5f);
         
-        setUpEnemy(1);
+        setUpEnemy(5);
         
         objectNode.attachChild(player);
         playerModel.rotate(FastMath.HALF_PI,0,0);
@@ -2158,13 +2220,14 @@ public class Main extends SimpleApplication {
         advanceEventTime = false;
         dialogueActive = true;
         dialogue.setText(text);
+        dialogue.setSize(guiFont.getCharSet().getRenderedSize() * 0.5f);
     }
 
     //----------------------------------------------------------------------------------
     //----------------------------------------------------------------------------------
     boolean temp = false;
     public void updateTimeline(float tpf) {
-        if(!spellcardActive && advanceEventTime && !dialogueActive) {
+        if((!spellcardActive && !stageActive) && advanceEventTime && !dialogueActive) {
             timer[T_EVENT_TIME] += 1/60f;
         }
         if(!spawnDone) {
@@ -2182,9 +2245,9 @@ public class Main extends SimpleApplication {
             introSequence(tpf);
         }
         if(!temp) {
-            timer[T_EVENT_TIME] = 49f;
+            //timer[T_EVENT_TIME] = 49f;
             temp = true;
-        }/*
+        }
         if(timer[T_EVENT_TIME] > 3.2 && !dialogueFlag[1]) {
             gameFlag[GFLAG_MOVE_ENABLED] = true;
             say("There are idiots who would go out on a night like this?",1);
@@ -2338,7 +2401,7 @@ public class Main extends SimpleApplication {
             say("Not bad right?",1);
             dialogueFlag[16] = true;
             gameFlag[STAGE3] = true;
-        }*/
+        }
 
         if(timer[T_EVENT_TIME] > 49 && !gameFlag[STAGE4_0]) {
             stage4(tpf);
@@ -2361,7 +2424,7 @@ public class Main extends SimpleApplication {
         }
 
         if(timer[T_EVENT_TIME] > 55 && !gameFlag[STAGE4_1]) {
-            stage4spell4(tpf);
+            stage4spell1(tpf);
         }
         if(timer[T_EVENT_TIME] > 56 && !gameFlag[STAGE4_2]) {
             stage4spell2(tpf);
@@ -2477,6 +2540,7 @@ public class Main extends SimpleApplication {
     final static float introSequenceTime4 = 7;
     
     private void introSequence(float tpf) {
+        System.out.println(introBanner.getLocalTranslation().x);
         timer[T_INTRO_TIME] += 1/60f;
         if(introBannerAlpha > 1) {
             introBannerAlpha = 1;
@@ -2505,23 +2569,23 @@ public class Main extends SimpleApplication {
             timer[T_INTRO_TIME] = 10;
         }
         if(timer[T_INTRO_TIME] > introSequenceTime2 && !introBannerEnterDone) {
-            if(introBanner.getLocalTranslation().y > (300 / windowScale)) {
+            if(introBanner.getLocalTranslation().x < (900 / windowScale)) {
                 introBannerAlpha += 1/60f;
-                introBanner.move(0,introBannerSpeed*1/60f,0);
+                introBanner.move(-introBannerSpeed*1/60f,0,0);
                 introBannerMat.setColor("Color", new ColorRGBA(1, 1, 1, introBannerAlpha));
             } else {
                 introBannerEnterDone = true;
             }
         }
         if(timer[T_INTRO_TIME] > introSequenceTime2 && introBannerEnterDone && timer[T_INTRO_TIME] < introSequenceTime3) {
-            introBanner.move(0,introBannerSpeed*1/60f,0);
+            introBanner.move(-introBannerSpeed*1/60f,0,0);
             if(introBannerSpeed < -30) introBannerSpeed += 5;
         }
         if(timer[T_INTRO_TIME] > introSequenceTime3 && !introBannerExitDone && introBannerEnterDone) {
             if(introBannerSpeed > -480) introBannerSpeed -= 10;
-            if(introBanner.getLocalTranslation().y > -400) {
+            if(introBanner.getLocalTranslation().x < 1400) {
                 introBannerAlpha -= 1/60f;
-                introBanner.move(0,introBannerSpeed*1/60f,0);
+                introBanner.move(-introBannerSpeed*1/60f,0,0);
                 introBannerMat.setColor("Color", new ColorRGBA(1, 1, 1, introBannerAlpha));
             } else {
                 introBannerExitDone = true;
@@ -2534,6 +2598,7 @@ public class Main extends SimpleApplication {
             camLoc.moveTo(gameCamLoc,1f);
             introDone = true;
             advanceEventTime = true;
+            introBanner.setLocalTranslation(screenWidth - 450 / windowScale, (350 / windowScale),0);
         }
     }
     //----------------------------------------------------------------------------------
@@ -3001,7 +3066,7 @@ public class Main extends SimpleApplication {
         closeSpell(STAGE1_6,90,50,tpf);
     }
     private void stageClear(float tpf, int stage, int stageflag) {
-        spellcardActive = true;
+        stageActive = true;
         updateSpellTimer(tpf, 1);
         if(!spellFlag[3]) {
             System.out.println("Stage "+stage+" Spell L");
@@ -3052,6 +3117,7 @@ public class Main extends SimpleApplication {
         if(spellFlag[SFLAG_SCORE] && !gameFlag[stageflag]) {
              resetCardVars();
              spellcardActive = false;
+             stageActive = false;
              gameFlag[GFLAG_SCORE] = false;
              gameFlag[stageflag] = true;
         }
@@ -3061,7 +3127,7 @@ public class Main extends SimpleApplication {
     }
     
     private void stage2(float tpf) {
-        spellcardActive = true;
+        stageActive = true;
         updateSpellTimer(tpf, 2);
         if(!gameFlag[STAGE2_0_1]) {
             System.out.println("Stage 2 Start");
@@ -3070,7 +3136,7 @@ public class Main extends SimpleApplication {
             gameFlag[STAGE2_0_1] = true;
         }
         if(spellTimer[0] > 3 && !gameFlag[STAGE2_0]) {
-            spellcardActive = false;
+            stageActive = false;
             gameFlag[STAGE2_0] = true;
             resetCardVars();
         }
@@ -3328,6 +3394,10 @@ public class Main extends SimpleApplication {
     
     public void closeSpell(int spell, int timeLimit, int lifeLimit,float tpf) {
         if((spellTimer[T_SPELL_MAIN] > timeLimit || enemy.life < lifeLimit) && !bulletsCleared){
+            if(spellcardActive) {
+                spellcardActive = false;
+                stageActive = true;
+            }
             //Set enemy animation to hurt animation if life is under lifelimit
             if(enemy.life < lifeLimit && !spellFlag[SFLAG_CSPELL]) {
                 try {
@@ -3335,7 +3405,7 @@ public class Main extends SimpleApplication {
                     enemyAnimChan.setSpeed(0.7f);
                     enemyAnimChan.setLoopMode(LoopMode.DontLoop);
                 } catch(Exception ex) {
-                    
+                    //No back animation
                 }
                 spellTimer[T_SPELL_FADE] = 0;
                 spellFlag[SFLAG_CSPELL] = true;
@@ -3372,6 +3442,7 @@ public class Main extends SimpleApplication {
                 cutEnemyDone = false;
                 resetCardVars();
                 spellcardActive = false;
+                stageActive = false;
                 bulletLight.setColor(new ColorRGBA(1, 1, 1, 1));
                 gameFlag[spell] = true;
                 spellCircleCreated = false;
@@ -3893,7 +3964,7 @@ public class Main extends SimpleApplication {
         stageClear(tpf,2,STAGE2_L);
     }
     private void stage3(float tpf) {
-        spellcardActive = true;
+        stageActive = true;
         updateSpellTimer(tpf, 2);
         if(!gameFlag[STAGE3_0_1]) {
             System.out.println("Stage 3 Start");
@@ -3906,7 +3977,7 @@ public class Main extends SimpleApplication {
             gameFlag[STAGE3_0_1] = true;
         }
         if(spellTimer[0] > 3 && !gameFlag[STAGE3_0]) {
-            spellcardActive = false;
+            stageActive = false;
             gameFlag[STAGE3_0] = true;
             resetCardVars();
         }
@@ -4217,7 +4288,7 @@ public class Main extends SimpleApplication {
         stageClear(tpf, 3, STAGE3_L);
     }
     private void stage4(float tpf) {
-        spellcardActive = true;
+        stageActive = true;
         updateSpellTimer(tpf, 2);
         if(!gameFlag[STAGE4_0_1]) {
             System.out.println("Stage 4 Start");
@@ -4228,7 +4299,7 @@ public class Main extends SimpleApplication {
         }
         
         if(spellTimer[0] > 3 && !gameFlag[STAGE4_0]) {
-            spellcardActive = false;
+            stageActive = false;
             gameFlag[STAGE4_0] = true;
             resetCardVars();
         }
@@ -4240,79 +4311,79 @@ public class Main extends SimpleApplication {
             enemy.moveTo(Vector3f.ZERO,3);
             spellFlag[1] = true;
         }
-        Vector3f target = new Vector3f();
-        Vector3f base = new Vector3f();
-        if(!spellFlag[2] && spellTimer[2] > 2.5) {
-            enemyAnimChan.setAnim("slash",1);
-            enemyAnimChan.setLoopMode(LoopMode.DontLoop);
-            spellFlag[2] = true;
-            timescale = 0.3f;
-        }
-        if(enemyAnimChan.getTime() > 1.3f && spellTimer[2] > 2.5) {
-            timescale = 1f;
-            float randX = FastMath.nextRandomInt(0,20);
-            float randY = FastMath.nextRandomInt(140,180);
-            if(enemy.getX() < 0) {
-                randX += enemy.getX();
-            } else {
-                randX -= enemy.getX();
+        if(!(spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)){
+            Vector3f target = new Vector3f();
+            if(!spellFlag[2] && spellTimer[2] > 2.5) {
+                enemyAnimChan.setAnim("slash",1);
+                enemyAnimChan.setLoopMode(LoopMode.DontLoop);
+                spellFlag[2] = true;
+                timescale = 0.3f;
             }
-            if(spellFlag[5]) {
-                randY = enemy.getY() + randY;
-            } else {
-                randY = enemy.getY() - randY;
-            }
-            spellFlag[5] = !spellFlag[5];
-            if(randX > 50) {
-                randX = 50;
-            } else if(randX < -50) {
-                randX = -50;
-            }
-            if(randY > playerMaxDistance) {
-                randY = playerMaxDistance;
-            } else if(randY < playerMinDistance) {
-                randY = playerMinDistance;
-            }
-            
-            target = new Vector3f(randX,randY,0);
-            base = new Vector3f(enemy.getPos());
-            enemy.moveTo(target,3);
-            enemy.lookAt(target, Vector3f.UNIT_Z);
-            
-            spellFlag[2] = false;
-            spellTimer[2] = 0;
-            
-            Vector3f midpoint = new Vector3f((enemy.getX()*2 + randX)/3, (enemy.getY()*2 + randY)/3, 0);
-            for(int i = 0; i < 16; i++) {
-                if(spellFlag[3]) {
-                    fireStraightLine(midpoint, target, 1, i*0.1f - 0.8f, 49,  2, BULLET.ARROWSHOT_T);
+            if(enemyAnimChan.getTime() > 1.3f && spellTimer[2] > 2.5) {
+                timescale = 1f;
+                float randX = FastMath.nextRandomInt(0,20);
+                float randY = FastMath.nextRandomInt(140,180);
+                if(enemy.getX() < 0) {
+                    randX += enemy.getX();
                 } else {
-                    fireStraightLine(midpoint, target, 1, i*0.1f - 0.8f, 49,  2, BULLET.ARROWSHOT_P);
+                    randX -= enemy.getX();
                 }
-                
-            }
-            spellFlag[3] = !spellFlag[3];
-        }
-        float dist = enemy.getDestination().distance(enemy.getPos());
-        if(dist > 5) {
-            if(spellTimer[3] > 0.03) {
-                for(int i = 0; i < dist/5; i++) {
-                    float offset = FastMath.nextRandomFloat()/3;
-                    if(spellFlag[5]) offset = -offset;
-                    BULLET bulletType = BULLET.ARROWSHOT_T;
-                    if(spellFlag[5]) bulletType = BULLET.ARROWSHOT_P;
-                    fireSpeedShot(enemy.getPos(),enemy.getPos().add(1,offset,0),dist/20,1,5+Math.abs(offset)*15,1,bulletType);
-                    fireSpeedShot(enemy.getPos(),enemy.getPos().add(-1,offset,0),dist/20,1,5+Math.abs(offset)*15,1,bulletType);
+                if(spellFlag[5]) {
+                    randY = enemy.getY() + randY;
+                } else {
+                    randY = enemy.getY() - randY;
                 }
-                spellTimer[3] = 0;
+                spellFlag[5] = !spellFlag[5];
+                if(randX > 50) {
+                    randX = 50;
+                } else if(randX < -50) {
+                    randX = -50;
+                }
+                if(randY > playerMaxDistance) {
+                    randY = playerMaxDistance;
+                } else if(randY < playerMinDistance) {
+                    randY = playerMinDistance;
+                }
+
+                target = new Vector3f(randX,randY,0);
+                enemy.moveTo(target,3);
+                enemy.lookAt(target, Vector3f.UNIT_Z);
+
+                spellFlag[2] = false;
+                spellTimer[2] = 0;
+
+                Vector3f midpoint = new Vector3f((enemy.getX()*2 + randX)/3, (enemy.getY()*2 + randY)/3, 0);
+                for(int i = 0; i < 16; i++) {
+                    if(spellFlag[3]) {
+                        fireStraightLine(midpoint, target, 1, i*0.1f - 0.8f, 49,  2, BULLET.ARROWSHOT_T);
+                    } else {
+                        fireStraightLine(midpoint, target, 1, i*0.1f - 0.8f, 49,  2, BULLET.ARROWSHOT_P);
+                    }
+
+                }
+                spellFlag[3] = !spellFlag[3];
             }
+            float dist = enemy.getDestination().distance(enemy.getPos());
+            if(dist > 5) {
+                if(spellTimer[3] > 0.03) {
+                    for(int i = 0; i < dist/5; i++) {
+                        float offset = FastMath.nextRandomFloat()/3;
+                        if(spellFlag[5]) offset = -offset;
+                        BULLET bulletType = BULLET.ARROWSHOT_T;
+                        if(spellFlag[5]) bulletType = BULLET.ARROWSHOT_P;
+                        fireSpeedShot(enemy.getPos(),enemy.getPos().add(1,offset,0),dist/20,1,5+Math.abs(offset)*15,1,bulletType);
+                        fireSpeedShot(enemy.getPos(),enemy.getPos().add(-1,offset,0),dist/20,1,5+Math.abs(offset)*15,1,bulletType);
+                    }
+                    spellTimer[3] = 0;
+                }
+            }
+            /*if(spellTimer[5] > 0.1) {
+                Vector3f pos = new Vector3f(FastMath.nextRandomInt(-80,80),-70+FastMath.nextRandomInt(0,10),0);
+                fireScaleShot(pos, pos.add(Vector3f.UNIT_Y), 25, 3+FastMath.nextRandomInt(0,2), 7, 9, BALLSHOT_R, "");
+                fireStraightShot(pos, Vector3f.ZERO, 22, 1, BALLSHOT_R);
+                spellTimer[5] = 0;
+            }*/
         }
-        /*if(spellTimer[5] > 0.1) {
-            Vector3f pos = new Vector3f(FastMath.nextRandomInt(-80,80),-70+FastMath.nextRandomInt(0,10),0);
-            fireScaleShot(pos, pos.add(Vector3f.UNIT_Y), 25, 3+FastMath.nextRandomInt(0,2), 7, 9, BALLSHOT_R, "");
-            fireStraightShot(pos, Vector3f.ZERO, 22, 1, BALLSHOT_R);
-            spellTimer[5] = 0;
-        }*/
         closeSpell(STAGE4_1,60,150,tpf);
         if(gameFlag[STAGE4_1]) {
             timescale = 1;
@@ -4344,31 +4415,32 @@ public class Main extends SimpleApplication {
             fireStraightShot(enemy.getPos(),player.getPos(),40,1,ARROWSHOT_G);
             spellTimer[2] = 0;
         }*/
-
-        if(spellTimer[5] > 5 && !spellFlag[5]) {
-            spellFlag[5] = true;
-            spellTimer[5] = 0;
-        }
-        if(spellTimer[7] > 6 && !spellFlag[7]) {
-            spellFlag[7] = true;
-        }
-        enemy.moveTo(0,0,0,3);
-        
-        if(spellTimer[6] > 0.05 && enemy.getPos().length() < 5) {
-            fireCurveCircle1(enemy.getPos(), 8, 1, spellTimer[0]*0.1f, true, 1f, 1, 2+FastMath.nextRandomFloat()*2-1, 30, 1, BULLET.BALLSHOT_B);
-            fireCurveCircle1(enemy.getPos(), 8, 1, spellTimer[0]*0.1f, false, 1f, 1, 2+FastMath.nextRandomFloat()*2-1, 30, 1, BULLET.BALLSHOT_P);
-            spellTimer[6] = 0;
-        }
-        if(spellFlag[7]) {
-            if(spellTimer[8] > 2) {
-                fireCurveCircle1(enemy.getPos(), 32, 1, spellTimer[0], true, 1, 2,3, 25, 2, BULLET.BALLSHOT_R);
-                fireCurveCircle1(enemy.getPos(), 32, 1, spellTimer[0], false, 1, 2,3, 25, 2, BULLET.BALLSHOT_B);
-                spellTimer[8] = 0;
+        if(!(spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)){
+            if(spellTimer[5] > 5 && !spellFlag[5]) {
+                spellFlag[5] = true;
+                spellTimer[5] = 0;
             }
-            if(spellTimer[9] > 1) {
-                fireCurveCircle1(enemy.getPos(), FastMath.nextRandomInt(5,9), 1, FastMath.nextRandomFloat(), true, 2, 4,6,25, FastMath.nextRandomInt(4,6), BULLET.BALLSHOT_R);
-                fireCurveCircle1(enemy.getPos(), FastMath.nextRandomInt(5,7), 1, FastMath.nextRandomFloat(), true, 2, 4,6, 25, FastMath.nextRandomInt(1,4), BULLET.BALLSHOT_R);
-                spellTimer[9] = 0;
+            if(spellTimer[7] > 6 && !spellFlag[7]) {
+                spellFlag[7] = true;
+            }
+            enemy.moveTo(0,0,0,3);
+
+            if(spellTimer[6] > 0.05 && enemy.getPos().length() < 5) {
+                fireCurveCircle1(enemy.getPos(), 8, 1, spellTimer[0]*0.1f, true, 1f, 1, 2+FastMath.nextRandomFloat()*2-1, 30, 1, BULLET.BALLSHOT_B);
+                fireCurveCircle1(enemy.getPos(), 8, 1, spellTimer[0]*0.1f, false, 1f, 1, 2+FastMath.nextRandomFloat()*2-1, 30, 1, BULLET.BALLSHOT_P);
+                spellTimer[6] = 0;
+            }
+            if(spellFlag[7]) {
+                if(spellTimer[8] > 2) {
+                    fireCurveCircle1(enemy.getPos(), 32, 1, spellTimer[0], true, 1, 2,3, 25, 2, BULLET.BALLSHOT_R);
+                    fireCurveCircle1(enemy.getPos(), 32, 1, spellTimer[0], false, 1, 2,3, 25, 2, BULLET.BALLSHOT_B);
+                    spellTimer[8] = 0;
+                }
+                if(spellTimer[9] > 1) {
+                    fireCurveCircle1(enemy.getPos(), FastMath.nextRandomInt(5,9), 1, FastMath.nextRandomFloat(), true, 2, 4,6,25, FastMath.nextRandomInt(4,6), BULLET.BALLSHOT_R);
+                    fireCurveCircle1(enemy.getPos(), FastMath.nextRandomInt(5,7), 1, FastMath.nextRandomFloat(), true, 2, 4,6, 25, FastMath.nextRandomInt(1,4), BULLET.BALLSHOT_R);
+                    spellTimer[9] = 0;
+                }
             }
         }
         closeSpell(STAGE4_2,60,150,tpf);
@@ -4376,15 +4448,15 @@ public class Main extends SimpleApplication {
     Vector3f targ;
     private void stage4spell3(float tpf){
         openSpell(4,3,9,250,tpf);
-        if(spellTimer[7] > 0.3) {
-            
-        Vector3f pos = new Vector3f(FastMath.nextRandomInt(-80,80),110,0);
-        fireStraightShot(pos, pos.subtract(Vector3f.UNIT_Y), 10, 1, BULLET.ARROWSHOT_P);
-        Vector3f pos2 = new Vector3f(FastMath.nextRandomInt(-80,80),110,0);
-        fireStraightShot(pos2, pos2.subtract(Vector3f.UNIT_Y), 10, 1, BULLET.ARROWSHOT_W);
-        spellTimer[7] = 0;
-        }
-        if(targ == null) {
+        if(!(spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)){
+            if(spellTimer[7] > 0.3) {
+                Vector3f pos = new Vector3f(FastMath.nextRandomInt(-80,80),110,0);
+                fireStraightShot(pos, pos.subtract(Vector3f.UNIT_Y), 10, 1, BULLET.ARROWSHOT_P);
+                Vector3f pos2 = new Vector3f(FastMath.nextRandomInt(-80,80),110,0);
+                fireStraightShot(pos2, pos2.subtract(Vector3f.UNIT_Y), 10, 1, BULLET.ARROWSHOT_W);
+                spellTimer[7] = 0;
+            }
+            if(targ == null) {
                 targ = new Vector3f(0,100,0);
             }
             if(spellFlag[2]) {
@@ -4418,9 +4490,11 @@ public class Main extends SimpleApplication {
                 spellTimer[2] = 0;
                 targ.set(player.getPos().subtract(enemy.getPos()).normalize().mult(50));
             }
+        }
         closeSpell(STAGE4_3,60,150,tpf);
     }
-    GameObject s4s4familiar;
+    //GameObject s4s4familiar;
+    Vector3f s4s4familiar;
     ParticleEmitter s4s4dashEmitter;
     private void stage4spell4(float tpf){
         openSpell(4,4,11,250,tpf);
@@ -4434,10 +4508,14 @@ public class Main extends SimpleApplication {
         int ANIM = 5;
         
         if(!spellFlag[INIT]) {
-            s4s4familiar = new GameObject("s4s4familiar");
-            s4s4familiar.attachChild(ballShotW.clone().scale(2));
+            if(s4s4familiar == null) {
+                s4s4familiar = new Vector3f(0,playerMinDistance,0);
+            }
+            gameFlag[STAGE4_4] = false;
+            //s4s4familiar = new GameObject("s4s4familiar");
+            //s4s4familiar.attachChild(ballShotW.clone().scale(2));
             //bulletNode.attachChild(s4s4familiar);
-            s4s4familiar.setPos(0,playerMinDistance,0);
+            //s4s4familiar.setPos(0,playerMinDistance,0);
             spellFlag[INIT] = true;
             enemy.moveTo(playerMaxSide, 0, 0, 4);
             
@@ -4457,55 +4535,56 @@ public class Main extends SimpleApplication {
             s4s4dashEmitter.setParticlesPerSec(0);
             enemy.attachChild(s4s4dashEmitter);
         }
-        
-        if(spellTimer[FAM_BULLET_TIMER] > 0.08) {
-            fireStraightLine(s4s4familiar.getPos(), Vector3f.ZERO, 1,FastMath.nextRandomFloat()-0.5f,15,  FastMath.nextRandomInt(6,8), BULLET.BALLSHOT_R, "s4s4ball");
-            spellTimer[FAM_BULLET_TIMER] = 0;
-        }
-        
-        //3 seconds between slashes
-        if(!spellFlag[SLASH] && spellTimer[SLASH] > 2.7f && enemyAnimChan.getTime() > 1.3f && spellFlag[ANIM]) {
-            spellFlag[SLASH] = true;
-            spellTimer[SLASH] = 0;     
-            spellFlag[ANIM] = false;
-            enemy.lookAt(Vector3f.ZERO, Vector3f.UNIT_Z);
-            enemyAnimChan.setSpeed(1f);
-        }
-        if(spellTimer[SLASH] > 0.5f) {
-            s4s4dashEmitter.setParticlesPerSec(0);
-        }
-        if(spellTimer[SLASH] > 2.7f) {
-            if(!spellFlag[ANIM]) {
-            enemyAnimChan.setAnim("slash");
-            enemyAnimChan.setLoopMode(LoopMode.DontLoop);
-            spellFlag[ANIM] = true;
-            timescale = 0.1f;
-            //enemyAnimChan.setSpeed(0.1f);
+        if(!(spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)){
+            if(spellTimer[FAM_BULLET_TIMER] > 0.08) {
+                fireStraightLine(s4s4familiar, Vector3f.ZERO, 1,FastMath.nextRandomFloat()-0.5f,15,  FastMath.nextRandomInt(6,8), BULLET.BALLSHOT_R, "s4s4ball");
+                spellTimer[FAM_BULLET_TIMER] = 0;
             }
-        }
-        //Slash
-        if(spellFlag[SLASH]) {
-            s4s4dashEmitter.setParticlesPerSec(100);
-            timescale = 1;
-            if(spellFlag[SIDE]) {
-                enemy.moveTo(playerMaxSide,0,0,6);
-            } else {
-                enemy.moveTo(-playerMaxSide,0,0,6);
+
+            //3 seconds between slashes
+            if(!spellFlag[SLASH] && spellTimer[SLASH] > 2.7f && enemyAnimChan.getTime() > 1.3f && spellFlag[ANIM]) {
+                spellFlag[SLASH] = true;
+                spellTimer[SLASH] = 0;     
+                spellFlag[ANIM] = false;
+                enemy.lookAt(Vector3f.ZERO, Vector3f.UNIT_Z);
+                enemyAnimChan.setSpeed(1f);
             }
-            Iterator bulletIterator = bulletNode.getChildren().iterator();
-            while(bulletIterator.hasNext()) {
-                GameObject curBullet = (GameObject) bulletIterator.next();
-                if((curBullet.getLocalTranslation().y < 15 && curBullet.getLocalTranslation().y > -15) && curBullet.getName().contains("s4s4ball")) {
-                    fireStraightCircle(curBullet.getPos(), 16, 1, 0, 21, FastMath.nextRandomInt(1,3), BULLET.BALLSHOT_P);
-                    curBullet.detachAllChildren();
-                    curBullet.removeFromParent();
+            if(spellTimer[SLASH] > 0.5f) {
+                s4s4dashEmitter.setParticlesPerSec(0);
+            }
+            if(spellTimer[SLASH] > 2.7f) {
+                if(!spellFlag[ANIM]) {
+                enemyAnimChan.setAnim("slash");
+                enemyAnimChan.setLoopMode(LoopMode.DontLoop);
+                spellFlag[ANIM] = true;
+                timescale = 0.1f;
+                //enemyAnimChan.setSpeed(0.1f);
                 }
             }
-            spellFlag[SIDE] = !spellFlag[SIDE];
-            spellFlag[SLASH] = false;
+            //Slash
+            if(spellFlag[SLASH]) {
+                s4s4dashEmitter.setParticlesPerSec(100);
+                timescale = 1;
+                if(spellFlag[SIDE]) {
+                    enemy.moveTo(playerMaxSide,0,0,6);
+                } else {
+                    enemy.moveTo(-playerMaxSide,0,0,6);
+                }
+                Iterator bulletIterator = bulletNode.getChildren().iterator();
+                while(bulletIterator.hasNext()) {
+                    GameObject curBullet = (GameObject) bulletIterator.next();
+                    if((curBullet.getLocalTranslation().y < 15 && curBullet.getLocalTranslation().y > -15) && curBullet.getName().contains("s4s4ball")) {
+                        fireStraightCircle(curBullet.getPos(), 16, 1, (float)Math.random(), 21, FastMath.nextRandomInt(1,3), BULLET.BALLSHOT_P);
+                        curBullet.detachAllChildren();
+                        curBullet.removeFromParent();
+                    }
+                }
+                spellFlag[SIDE] = !spellFlag[SIDE];
+                spellFlag[SLASH] = false;
+            }
         }
         closeSpell(STAGE4_4,60,150,tpf);
-        if(gameFlag[STAGE4_4]) {
+        if((spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)) {
             timescale = 1;
             s4s4dashEmitter.removeFromParent();
             s4s4dashEmitter.setParticlesPerSec(0);
@@ -4788,6 +4867,130 @@ public class Main extends SimpleApplication {
     }
     private void stage4spellL(float tpf) {
         stageClear(tpf, 4, STAGE4_L);
+    }
+    private void stage5(float tpf) {
+        stageActive = true;
+        updateSpellTimer(tpf, 2);
+        if(!gameFlag[STAGE5_0_1]) {
+            System.out.println("Stage 5 Start");
+            setUpEnemy(5);
+            enemyAnimChan.setAnim("up",1);
+            enemy.moveTo(Vector3f.ZERO, 6f);
+            gameFlag[STAGE5_0_1] = true;
+        }
+        
+        if(spellTimer[0] > 3 && !gameFlag[STAGE5_0]) {
+            stageActive = false;
+            gameFlag[STAGE5_0] = true;
+            resetCardVars();
+        }
+    }
+    private void stage5spell1(float tpf) {
+    }
+    private void stage5spell2(float tpf) {
+    }
+    private void stage5spell3(float tpf) {
+    }
+    private void stage5spell4(float tpf) {
+    }
+    private void stage5spell5(float tpf) {
+    }
+    private void stage5spell6(float tpf) {
+    }
+    private void stage5spellL(float tpf) {
+    }
+    private void stage6(float tpf) {
+        stageActive = true;
+        updateSpellTimer(tpf, 2);
+        if(!gameFlag[STAGE6_0_1]) {
+            System.out.println("Stage 6 Start");
+            setUpEnemy(6);
+            enemyAnimChan.setAnim("up",1);
+            enemy.moveTo(Vector3f.ZERO, 6f);
+            gameFlag[STAGE6_0_1] = true;
+        }
+        
+        if(spellTimer[0] > 3 && !gameFlag[STAGE6_0]) {
+            stageActive = false;
+            gameFlag[STAGE6_0] = true;
+            resetCardVars();
+        }
+    }
+    private void stage6spell1(float tpf) {
+    }
+    private void stage6spell2(float tpf) {
+    }
+    private void stage6spell3(float tpf) {
+    }
+    private void stage6spell4(float tpf) {
+    }
+    private void stage6spell5(float tpf) {
+    }
+    private void stage6spell6(float tpf) {
+    }
+    private void stage6spellL(float tpf) {
+    }
+    private void stage7(float tpf) {
+        spellcardActive = true;
+        updateSpellTimer(tpf, 2);
+        if(!gameFlag[STAGE7_0_1]) {
+            System.out.println("Stage 7 Start");
+            setUpEnemy(7);
+            enemyAnimChan.setAnim("up",1);
+            enemy.moveTo(Vector3f.ZERO, 6f);
+            gameFlag[STAGE7_0_1] = true;
+        }
+        
+        if(spellTimer[0] > 3 && !gameFlag[STAGE7_0]) {
+            spellcardActive = false;
+            gameFlag[STAGE7_0] = true;
+            resetCardVars();
+        }
+    }
+    private void stage7spell1(float tpf) {
+    }
+    private void stage7spell2(float tpf) {
+    }
+    private void stage7spell3(float tpf) {
+    }
+    private void stage7spell4(float tpf) {
+    }
+    private void stage7spell5(float tpf) {
+    }
+    private void stage7spell6(float tpf) {
+    }
+    private void stage7spellL(float tpf) {
+    }
+    private void stage8(float tpf) {
+        stageActive = true;
+        updateSpellTimer(tpf, 2);
+        if(!gameFlag[STAGE8_0_1]) {
+            System.out.println("Stage 8 Start");
+            setUpEnemy(8);
+            enemyAnimChan.setAnim("up",1);
+            enemy.moveTo(Vector3f.ZERO, 6f);
+            gameFlag[STAGE8_0_1] = true;
+        }
+        
+        if(spellTimer[0] > 3 && !gameFlag[STAGE8_0]) {
+            stageActive = false;
+            gameFlag[STAGE8_0] = true;
+            resetCardVars();
+        }
+    }
+    private void stage8spell1(float tpf) {
+    }
+    private void stage8spell2(float tpf) {
+    }
+    private void stage8spell3(float tpf) {
+    }
+    private void stage8spell4(float tpf) {
+    }
+    private void stage8spell5(float tpf) {
+    }
+    private void stage8spell6(float tpf) {
+    }
+    private void stage8spellL(float tpf) {
     }
     private void enemyDeathSequence() {
         enemyDeathEmitter = new ParticleEmitter("enemyDeathEmitter", ParticleMesh.Type.Triangle, 50);
@@ -5471,7 +5674,7 @@ public class Main extends SimpleApplication {
         if(!guiNode.hasChild(menuMark)) {
             guiNode.attachChild(menuMark);
         }
-        if (results.size() > 0) {
+        if (results.size() > 0 && titleAlpha[2] >= 0.5f) {
             CollisionResult closest = results.getClosestCollision();
             Quaternion q = new Quaternion();
             q.lookAt(closest.getContactNormal(), Vector3f.UNIT_Y);

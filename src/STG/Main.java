@@ -182,10 +182,11 @@ public class Main extends SimpleApplication {
     boolean spellcardActive;    //Stores whether a spellcard is active
     boolean stageActive;        //Like spellcardActive, but only for stagen_0
     boolean debug = false; //skips to game
-    boolean mute = false; //mutes
+    boolean mute = true; //mutes
     boolean gamePause = false;      //Stores whether game paused
     boolean gameOverFlag = false;   //Stores whether game over
     boolean gameMenuActive = false; //In game menu is active
+    boolean showDialogue = false;
     boolean dialogueActive = false; //Someone is talking
     boolean dialoguePlayer = false; //Player is talking
     boolean dialogueEnemy = false;  //Enemy is talking
@@ -404,6 +405,7 @@ public class Main extends SimpleApplication {
 
     //Text
     BitmapText dialogue;
+    Rectangle dialogueBounds;
     BitmapText scoreReading;
 
     BitmapText lifeDisplay;
@@ -431,7 +433,10 @@ public class Main extends SimpleApplication {
     ColorRGBA displayColor;
 
     //GUI
-    Node dialogueNode;
+    GuiImage dialogueNode;
+    Box dialogueNodeModel;
+    Material dialoguePaneMat;
+    
     GuiImage portraitPlayer;
     GuiImage portraitEnemy;
     Box portraitPlayerModel;
@@ -442,10 +447,6 @@ public class Main extends SimpleApplication {
     Box cutEnemyModel;
     Material cutEnemyMat;
     float cutEnemyAlpha = 0;
-
-    PanelNode dialoguePane;
-    Spatial dialoguePaneModel;
-    Material dialoguePaneMat;
 
     GuiImage introBanner;
     Box introBannerModel;
@@ -548,7 +549,7 @@ public class Main extends SimpleApplication {
             music = new AudioNode(assetManager, file, false);
             music.setLooping(true);
             rootNode.attachChild(music);
-            music.setVolume(0f);
+            music.setVolume(0.5f);
             music.play();
         } catch(Exception ex) {}
         }
@@ -639,6 +640,12 @@ public class Main extends SimpleApplication {
         //cam.lookAt(mainMenuState.getLocalTranslation(),Vector3f.UNIT_Y);
         rootNode.attachChild(mainMenuState);
 
+        lastX = inputManager.getCursorPosition().x;
+        lastY = inputManager.getCursorPosition().y;
+        menuMark.setLocalTranslation(screenWidth/2, screenHeight / 2, 0);
+        inputManager.setCursorVisible(false);
+        
+        
         initMainMenuBindings();
     }
 
@@ -937,6 +944,7 @@ public class Main extends SimpleApplication {
         gameOverFlag = false;
         gameMenuActive = false;
         dialogueActive = false;
+        showDialogue = false;
         dialoguePlayer = false;
         dialogueEnemy = false;
         spawnDone = false;
@@ -1084,8 +1092,6 @@ public class Main extends SimpleApplication {
         guiNode.attachChild(menuReturn);
 
         //Set up dialogue pane and portraits
-        dialogueNode = new Node("DialogueNode");
-
         portraitPlayerModel = new Box(100,200,0);
         portraitPlayer = new GuiImage("portraitPlayer", portraitPlayerModel);
         portraitPlayer.setWidth(100);
@@ -1108,18 +1114,17 @@ public class Main extends SimpleApplication {
         portraitEnemy.move(screenWidth + 100, portraitEnemy.getHeight(), 0);
         guiNode.attachChild(portraitEnemy);
 
-        dialoguePane = new PanelNode("dialoguePane");
-        dialoguePaneModel = assetManager.loadModel("Models/game/dialogPane.j3o");
+        dialogueNodeModel = new Box(screenWidth, guiFont.getCharSet().getRenderedSize()*2.7f,0);
+        dialogueNode = new GuiImage("DialogueNode", dialogueNodeModel);
+        dialogueNode.setWidth(screenWidth);
+        dialogueNode.setHeight(Math.round(guiFont.getCharSet().getRenderedSize()*2.7f));
         dialoguePaneMat = new Material(assetManager, "MatDefs/Unshaded.j3md");
-        dialoguePaneMat.setTexture("ColorMap", assetManager.loadTexture("Models/game/pauseMenu.png"));
+        dialoguePaneMat.setTexture("ColorMap", assetManager.loadTexture("Textures/game/black.png"));
         dialoguePaneMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
-        dialoguePane.setQueueBucket(Bucket.Transparent);
-        dialoguePaneModel.setMaterial(dialoguePaneMat);
-        dialoguePane.attachChild(dialoguePaneModel);
-
-        dialogueNode.attachChild(dialoguePane);
-        guiNode.attachChild(portraitPlayer);
-
+        dialogueNode.setMat(dialoguePaneMat);
+        guiNode.attachChild(dialogueNode);
+        dialogueNode.setLocalTranslation(0, 0, 0);
+        
         //Create a new player object just to avoid null pointers for now
         player = new Player();
         enemy = new Enemy();
@@ -1129,9 +1134,11 @@ public class Main extends SimpleApplication {
 
         dialogue = new BitmapText(guiFont,false);
         dialogue.setSize(guiFont.getCharSet().getRenderedSize() * 0.5f);
-        //dialogue.setLocalTranslation(screenWidth / 2, dialogue.getLineHeight(), 0);
-        dialogue.setBox(new Rectangle(0,0,screenWidth,dialogue.getLineHeight()));
+        dialogue.setLocalTranslation(0, guiFont.getCharSet().getRenderedSize(), 0);
+        dialogueBounds = new Rectangle(0,0,screenWidth, guiFont.getCharSet().getRenderedSize());
+        dialogue.setBox(dialogueBounds);
         dialogue.setAlignment(BitmapFont.Align.Center);
+        dialogue.setText("");
         guiNode.attachChild(dialogue);
 
         player.setLife(player.MAX_LIFE);
@@ -1622,8 +1629,8 @@ public class Main extends SimpleApplication {
         camFocalPoint.update(tpf);
         camLoc.update(tpf);
         //Setting the positions for the hud elements.
-        dialogueNode.setLocalTranslation(cam.getLocation().add(cam.getDirection().mult(5)));
-        dialogueNode.lookAt(cam.getLocation(), Vector3f.UNIT_Z);
+        //dialogueNode.setLocalTranslation(cam.getLocation().add(cam.getDirection().mult(5)));
+        //dialogueNode.lookAt(cam.getLocation(), Vector3f.UNIT_Z);
 
         updateGamePortraits(tpf);
         updateTimeline(tpf);
@@ -1794,15 +1801,19 @@ public class Main extends SimpleApplication {
         }
     }
     public void updateGamePortraits(float tpf) {
-        if(dialogueActive) {
+        if(showDialogue) {
             timer[T_AFTER_DIALOGUE_TIME] = 0;
             if(dialoguePlayer) {
-                if(portraitPlayer.getLocalTranslation().x < portraitPlayer.getWidth() - 25) {
+                if(portraitPlayer.getLocalTranslation().x + 13 < portraitPlayer.getWidth() - 25) {
                     portraitPlayer.move(13f,0,0);
+                } else {
+                    portraitPlayer.setLocalTranslation(portraitPlayer.getWidth() - 25,portraitPlayer.getHeight(),0);
                 }
             } else {
-                if(portraitPlayer.getLocalTranslation().x > -25) {
+                if(portraitPlayer.getLocalTranslation().x - 18 > 20) {
                     portraitPlayer.move(-18f,0,0);
+                } else {
+                    portraitPlayer.setLocalTranslation(20,portraitPlayer.getHeight(),0);
                 }
             }
 
@@ -1811,13 +1822,15 @@ public class Main extends SimpleApplication {
                     portraitEnemy.move(-13f,0,0);
                 }
             } else {
-                if(portraitEnemy.getLocalTranslation().x < screenWidth - 75) {
+                if(portraitEnemy.getLocalTranslation().x < screenWidth - 50) {
                     portraitEnemy.move(18f,0,0);
                 }
             }
 
-            if(dialoguePane.getLocalTranslation().y < 0) {
-                dialoguePane.move(0,1f,0);
+            if(dialogueNode.getLocalTranslation().y < 0) {
+                dialogueNode.move(0,15f,0);
+            } else {
+                dialogueNode.setLocalTranslation(0, 0, 0);
             }
         } else { //Dialogue inactive
             timer[T_AFTER_DIALOGUE_TIME] += tpf;
@@ -1833,8 +1846,10 @@ public class Main extends SimpleApplication {
                         portraitEnemy.move(5f,0,0);
                     }
                 }
-                if(dialoguePane.getLocalTranslation().y > -100) {
-                    dialoguePane.move(0,-5f,0);
+                if(dialogueNode.getLocalTranslation().y > -100) {
+                    dialogueNode.move(0,-15f,0);
+                } else {
+                    dialogueNode.setLocalTranslation(0, -100, 0);
                 }
             }
         }
@@ -2196,7 +2211,7 @@ public class Main extends SimpleApplication {
         playerAnimChan.setAnim("down");
         playerAnimChan.setSpeed(0.5f);
         
-        setUpEnemy(5);
+        setUpEnemy(1);
         
         objectNode.attachChild(player);
         playerModel.rotate(FastMath.HALF_PI,0,0);
@@ -2211,16 +2226,20 @@ public class Main extends SimpleApplication {
         //If speaker is 1, it's the player.  If it's 2, it's the enemy
         if(speaker == 1) {
             dialoguePlayer = true;
-            dialogue.setColor(new ColorRGBA(0.7f, 0.3f, 0.3f, 1));
+            dialogue.setColor(new ColorRGBA(0.9f, 0.6f, 0.6f, 1));
         } else if(speaker == 2) {
             dialogueEnemy = true;
-            dialogue.setColor(new ColorRGBA(0.3f, 0.3f, 0.7f, 1));
+            dialogue.setColor(new ColorRGBA(0.6f, 0.6f, 0.9f, 1));
         }
         
         advanceEventTime = false;
         dialogueActive = true;
         dialogue.setText(text);
         dialogue.setSize(guiFont.getCharSet().getRenderedSize() * 0.5f);
+        dialogue.setLocalTranslation(0, guiFont.getCharSet().getRenderedSize(), 0);
+        dialogue.setBox(dialogueBounds);
+        dialogue.setAlignment(BitmapFont.Align.Center);
+        //dialogue.setSize(guiFont.getCharSet().getRenderedSize() * 0.5f);
     }
 
     //----------------------------------------------------------------------------------
@@ -2245,7 +2264,8 @@ public class Main extends SimpleApplication {
             introSequence(tpf);
         }
         if(!temp) {
-            //timer[T_EVENT_TIME] = 49f;
+            //timer[T_EVENT_TIME] = 62.2f;
+            //gameFlag[GFLAG_MOVE_ENABLED] = true;
             temp = true;
         }
         if(timer[T_EVENT_TIME] > 3.2 && !dialogueFlag[1]) {
@@ -2253,6 +2273,7 @@ public class Main extends SimpleApplication {
             say("There are idiots who would go out on a night like this?",1);
             System.out.println("Dialogue 1.");
             dialogueFlag[1] = true;
+            showDialogue = true;
         }
         if(timer[T_EVENT_TIME] > 3.4 && !dialogueFlag[2]) {
             say("Who?",2);
@@ -2268,6 +2289,7 @@ public class Main extends SimpleApplication {
             dialogueFlag[4] = true;
         }
         if(timer[T_EVENT_TIME] > 4 && !gameFlag[STAGE1_1]) {
+            showDialogue = false;
             stage1spell1(tpf);
             //stage2spell2(tpf);
             //stage2spell1(tpf);
@@ -2294,6 +2316,7 @@ public class Main extends SimpleApplication {
         if(timer[T_EVENT_TIME] > 18 && !dialogueFlag[5]) {
             say("Finished",1);
             dialogueFlag[5] = true;
+            showDialogue = true;
         }
         if(timer[T_EVENT_TIME] > 18.2 && !dialogueFlag[6]) {
             say("Ok",2);
@@ -2302,10 +2325,12 @@ public class Main extends SimpleApplication {
         }
 
         if(timer[T_EVENT_TIME] > 20 && !gameFlag[STAGE2_0] && gameFlag[STAGE1]) {
+            showDialogue = false;
             stage2(tpf);
         }
 
         if(timer[T_EVENT_TIME] > 22  && !dialogueFlag[7]) {
+            showDialogue = true;
             dialogueFlag[7] = true;
             say("A magician too?", 1);
             setBackgroundMusic("Sounds/stage2.ogg");
@@ -2322,6 +2347,7 @@ public class Main extends SimpleApplication {
         }
 
         if(timer[T_EVENT_TIME] > 24 && !gameFlag[STAGE2_1]) {
+            showDialogue = false;
             stage2spell1(tpf);
         }
         if(timer[T_EVENT_TIME] > 26 && !gameFlag[STAGE2_2])  {
@@ -2343,6 +2369,7 @@ public class Main extends SimpleApplication {
             stage2spellL(tpf);
         }
         if(timer[T_EVENT_TIME] > 36 && !dialogueFlag[10]) {
+            showDialogue = true;
             say("I'm out",1);
             dialogueFlag[10] = true;
         }
@@ -2353,10 +2380,12 @@ public class Main extends SimpleApplication {
         }
 
         if(timer[T_EVENT_TIME] > 38 && !gameFlag[STAGE3_0]) {
+            showDialogue = false;
             stage3(tpf);
         }
 
         if(timer[T_EVENT_TIME] > 40  && !dialogueFlag[12]) {
+            showDialogue = true;
             dialogueFlag[12] = true;
             say("Nice hair.", 1);
             setBackgroundMusic("Sounds/stage3.ogg");
@@ -2373,6 +2402,7 @@ public class Main extends SimpleApplication {
         }
 
         if(timer[T_EVENT_TIME] > 42 && !gameFlag[STAGE3_1]) {
+            showDialogue = false;
             stage3spell1(tpf);
         }
         if(timer[T_EVENT_TIME] > 43 && !gameFlag[STAGE3_2]) {
@@ -2394,6 +2424,7 @@ public class Main extends SimpleApplication {
             stage3spellL(tpf);
         }
         if(timer[T_EVENT_TIME] > 49 && !dialogueFlag[15]) {
+            showDialogue = true;
             say("Ahh..",2);
             dialogueFlag[15] = true;
         }
@@ -2404,10 +2435,12 @@ public class Main extends SimpleApplication {
         }
 
         if(timer[T_EVENT_TIME] > 49 && !gameFlag[STAGE4_0]) {
+            showDialogue = false;
             stage4(tpf);
         }
 
         if(timer[T_EVENT_TIME] > 53  && !dialogueFlag[17]) {
+            showDialogue = true;
             dialogueFlag[17] = true;
             say("What are you so mad about?", 1);
             setBackgroundMusic("Sounds/stage4.ogg");
@@ -2424,6 +2457,7 @@ public class Main extends SimpleApplication {
         }
 
         if(timer[T_EVENT_TIME] > 55 && !gameFlag[STAGE4_1]) {
+            showDialogue = false;
             stage4spell1(tpf);
         }
         if(timer[T_EVENT_TIME] > 56 && !gameFlag[STAGE4_2]) {
@@ -2445,10 +2479,12 @@ public class Main extends SimpleApplication {
             stage4spellL(tpf);
         }
         if(timer[T_EVENT_TIME] > 62 && !dialogueFlag[20]) {
+            showDialogue = true;
             say("!!",2);
             dialogueFlag[20] = true;
         }
         if(timer[T_EVENT_TIME] > 62.2 && !dialogueFlag[21]) {
+            showDialogue = false;
             say("Come back a century from now.",1);
             dialogueFlag[21] = true;
             gameFlag[STAGE4] = true;
@@ -2458,6 +2494,32 @@ public class Main extends SimpleApplication {
             filtPostProc.removeFilter(radialBlur);
             fadeFilter.fadeOut();
             guiNode.detachAllChildren();
+        }
+        if(timer[T_EVENT_TIME] > 63 && !gameFlag[STAGE5_0]) {
+            stage5(tpf);
+        }
+        
+        if(timer[T_EVENT_TIME] > 63.5  && !dialogueFlag[22]) {
+            dialogueFlag[22] = true;
+            showDialogue = true;
+            say("What are you so mad about?", 1);
+            setBackgroundMusic("Sounds/stage4.ogg");
+        }
+
+        if(timer[T_EVENT_TIME] > 63.7 && !dialogueFlag[23]) {
+            dialogueFlag[23] = true;
+            say("Just die quickly!", 2);
+        }
+
+        if(timer[T_EVENT_TIME] > 63.9 && !dialogueFlag[24]) {
+            dialogueFlag[24] = true;
+            say("You realize.. nevermind.", 1);
+        }
+
+        if(timer[T_EVENT_TIME] > 64 && !gameFlag[STAGE5_1]) {
+            showDialogue = false;
+            gameFlag[GFLAG_MOVE_ENABLED] = true;
+            stage5spell1(tpf);
         }
     }
 
@@ -2664,34 +2726,42 @@ public class Main extends SimpleApplication {
             objectNode.attachChild(familiarTest2);
             spellFlag[9] = true;
         }
-        familiarTest.setPos(-FastMath.cos(spellTimer[0])*15,FastMath.sin(spellTimer[0])*15,0);
-        familiarTest2.setPos(FastMath.cos(spellTimer[0])*15,FastMath.sin(spellTimer[0])*15,0);
+        if(!(spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)) {
+            familiarTest.setPos(-FastMath.cos(spellTimer[0])*15,FastMath.sin(spellTimer[0])*15,0);
+            familiarTest2.setPos(FastMath.cos(spellTimer[0])*15,FastMath.sin(spellTimer[0])*15,0);
 
-        interruptCycleTime += tpf;
-        
-        if(interruptCycleTime > 0.2) {
-            interrupt = !interrupt;
-            interruptCycleTime = 0;
-        }
-        if(spellTimer[2] > 2) {
-            spellcard1_1 = false;
-            spellTimer[2] = 0;
-        }
-        if(spellTimer[4] > 5) {
-            spellTimer[4] = 0;
-            spellFlag[4] = !spellFlag[4];
-        }
-        if(spellTimer[1] > 0.02 && !interrupt && spellFlag[0] && spellFlag[4]) {
-            fireStraightCircle(familiarTest.getLocalTranslation(), 12, 1, spellTimer[0] * 0.5f, 20f, 1f, BULLET.TALISMAN_R);
-            fireStraightCircle(familiarTest2.getLocalTranslation(), 12, 1, -spellTimer[0] * 0.5f, 20f, 1f, BULLET.TALISMAN_B);
-        }
+            interruptCycleTime += tpf;
 
-        if(spellTimer[5] > 0.5 && spellFlag[0] && !spellFlag[4]) {
-            fireSpeedCircle(enemy.getLocalTranslation(), 8, 1, -spellTimer[0], 10, 2,10f, 2f, BULLET.TALISMAN_B);
-            fireSpeedCircle(enemy.getLocalTranslation(), 8, 1, spellTimer[0], 10, 2,10f, 2f, BULLET.TALISMAN_B);
-            fireSpeedCircle(enemy.getLocalTranslation().add(30,0,0), 8, 1, spellTimer[0], 10f,1,30, 1f, BULLET.TALISMAN_R);
-            fireSpeedCircle(enemy.getLocalTranslation().add(-30,0,0), 8, 1, -spellTimer[0], 10f,1,30, 1f, BULLET.TALISMAN_R);
-            spellTimer[5] = 0;
+            if(interruptCycleTime > 0.2) {
+                interrupt = !interrupt;
+                interruptCycleTime = 0;
+            }
+            if(spellTimer[2] > 2) {
+                spellcard1_1 = false;
+                spellTimer[2] = 0;
+            }
+            if(spellTimer[4] > 5) {
+                spellTimer[4] = 0;
+                spellFlag[4] = !spellFlag[4];
+            }
+            if(spellTimer[1] > 0.02 && !interrupt && spellFlag[0] && spellFlag[4]) {
+                fireStraightCircle(familiarTest.getLocalTranslation(), 12, 1, spellTimer[0] * 0.5f, 20f, 1f, BULLET.TALISMAN_R);
+                fireStraightCircle(familiarTest2.getLocalTranslation(), 12, 1, -spellTimer[0] * 0.5f, 20f, 1f, BULLET.TALISMAN_B);
+            }
+
+            if(spellTimer[5] > 0.5 && spellFlag[0] && !spellFlag[4]) {
+                fireSpeedCircle(enemy.getLocalTranslation(), 8, 1, -spellTimer[0], 10, 2,10f, 2f, BULLET.TALISMAN_B);
+                fireSpeedCircle(enemy.getLocalTranslation(), 8, 1, spellTimer[0], 10, 2,10f, 2f, BULLET.TALISMAN_B);
+                fireSpeedCircle(enemy.getLocalTranslation().add(30,0,0), 8, 1, spellTimer[0], 10f,1,30, 1f, BULLET.TALISMAN_R);
+                fireSpeedCircle(enemy.getLocalTranslation().add(-30,0,0), 8, 1, -spellTimer[0], 10f,1,30, 1f, BULLET.TALISMAN_R);
+                spellTimer[5] = 0;
+            }
+        } else {
+            if(!spellFlag[8]) {
+                familiarTest.removeFromParent();
+                familiarTest2.removeFromParent();
+                spellFlag[8] = true;
+            }
         }
         closeSpell(STAGE1_1, 60, 150, tpf);
     }
@@ -2831,60 +2901,63 @@ public class Main extends SimpleApplication {
     }
     boolean spellcard2_1, spellcard2_2, spellcard2_3, spellcard2_3_1, spellcard2_3_2, moved = false;
 
+    Vector3f s1s2movevec;
     private void stage1spell2(float tpf) {
         openSpell(1,2,10,250, tpf);
-        //Move around a bit.
-        if(spellTimer[1] > 0 && !moved) {
-            enemy.moveTo(new Vector3f(FastMath.nextRandomFloat()*10,FastMath.nextRandomFloat()*10,0f),0.1f);
-            moved = true;
-        }
-        
-        spellcardActive = true;
-        updateSpellTimer(tpf, 2);
-        if(spellTimer[1] > 2 && !spellcard2_1) {
-            fireSpeedCircle(enemy.getLocalTranslation(), 64, 8, 0, 18f, 2, 8, 1f, colorSwitch);
-                if(colorSwitch == BULLET.TALISMAN_R) {
-                    colorSwitch = BULLET.TALISMAN_W;
-                } else if(colorSwitch == BULLET.TALISMAN_W) {
-                    colorSwitch = BULLET.TALISMAN_R;
-                } else {
-                    colorSwitch = BULLET.TALISMAN_R;
-                }
-            spellcard2_1 = true;
-        }
+        if(!(spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)) {
+            //Move around a bit.
+            if(spellTimer[1] > 0 && !moved) {
+                s1s2movevec = new Vector3f(FastMath.nextRandomFloat() * 10, FastMath.nextRandomFloat() * 10, 0);
+                moved = true;
+            }
+            enemy.moveTo(s1s2movevec, 20 * tpf);
+            spellcardActive = true;
+            updateSpellTimer(tpf, 2);
+            if(spellTimer[1] > 2 && !spellcard2_1) {
+                fireSpeedCircle(enemy.getLocalTranslation(), 64, 8, 0, 18f, 2, 8, 1f, colorSwitch);
+                    if(colorSwitch == BULLET.TALISMAN_R) {
+                        colorSwitch = BULLET.TALISMAN_W;
+                    } else if(colorSwitch == BULLET.TALISMAN_W) {
+                        colorSwitch = BULLET.TALISMAN_R;
+                    } else {
+                        colorSwitch = BULLET.TALISMAN_R;
+                    }
+                spellcard2_1 = true;
+            }
 
-        if(spellTimer[1] > 3 && !spellcard2_2) {
-            fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.00f, 14.0f, 2, 8, 1f, colorSwitch);
-            fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.02f, 14.5f, 2, 8, 1f, colorSwitch);
-            fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.04f, 15f, 2, 8, 1f, colorSwitch);
-            fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.06f, 15.5f, 2, 8, 1f, colorSwitch);
-            fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.08f, 16.0f, 2, 8, 1f, colorSwitch);
-            fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.10f, 16.5f, 2, 8, 1f, colorSwitch);
-            fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.12f, 17.0f, 2, 8, 1f, colorSwitch);
-            fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.14f, 17.5f, 2, 8, 1f, colorSwitch);
-            spellcard2_2 = true;
-        }
-        if(spellTimer[1] > 5 && !spellcard2_3) {
-            fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 26, 0, 9.2f,1,BULLET.TALISMAN_R);
-            spellcard2_3 = true;
-        }
-        if(spellTimer[1] > 5.4 && !spellcard2_3_1) {
-            fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 26, 0, 9.2f,1,BULLET.TALISMAN_R);
-            spellcard2_3_1 = true;
-        }
-        if(spellTimer[1] > 5.6 && !spellcard2_3_2) {
-            fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 26, 0, 9.2f,1,BULLET.TALISMAN_R);
-            spellcard2_3_2 = true;
-        }
-        //Restart cycle
-        if(spellTimer[1] > 5.8) {
-            spellTimer[1] = 0;
-            moved = false;
-            spellcard2_1 = false;
-            spellcard2_2 = false;
-            spellcard2_3 = false;
-            spellcard2_3_1 = false;
-            spellcard2_3_2 = false;
+            if(spellTimer[1] > 3 && !spellcard2_2) {
+                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.00f, 14.0f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.02f, 14.5f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.04f, 15f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.06f, 15.5f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.08f, 16.0f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.10f, 16.5f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.12f, 17.0f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.14f, 17.5f, 2, 8, 1f, colorSwitch);
+                spellcard2_2 = true;
+            }
+            if(spellTimer[1] > 5 && !spellcard2_3) {
+                fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 26, 0, 9.2f,1,BULLET.TALISMAN_R);
+                spellcard2_3 = true;
+            }
+            if(spellTimer[1] > 5.4 && !spellcard2_3_1) {
+                fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 26, 0, 9.2f,1,BULLET.TALISMAN_R);
+                spellcard2_3_1 = true;
+            }
+            if(spellTimer[1] > 5.6 && !spellcard2_3_2) {
+                fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 26, 0, 9.2f,1,BULLET.TALISMAN_R);
+                spellcard2_3_2 = true;
+            }
+            //Restart cycle
+            if(spellTimer[1] > 5.8) {
+                spellTimer[1] = 0;
+                moved = false;
+                spellcard2_1 = false;
+                spellcard2_2 = false;
+                spellcard2_3 = false;
+                spellcard2_3_1 = false;
+                spellcard2_3_2 = false;
+            }
         }
         closeSpell(STAGE1_2, 60, 150, tpf);
     }
@@ -2905,47 +2978,48 @@ public class Main extends SimpleApplication {
 
     private void stage1spell3(float tpf) {
         openSpell(1,3,10, 250,tpf);
-        spellCircle.rotate(0,0,tpf);
-        //Reset position
-        if(!unMoved) {
-            enemy.moveTo(Vector3f.ZERO, 0.01f);
-        }
-        enemy.moveTo(new Vector3f(FastMath.nextRandomFloat()*10,FastMath.nextRandomFloat()*10,0f),0.001f);
-        if(spellTimer[1] > 1.5 && !spellcard3_2) {
-            spellcard3_2 = true;
-            fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 4,0, 8,2,BULLET.TALISMAN_R);
-        }
-        if(spellTimer[1] > 3 && !spellcard3_1) {
-            fireStraightCircle(enemy.getLocalTranslation(),92,4,FastMath.nextRandomFloat(),35, 2f, BULLET.TALISMAN_R);
-            fireStraightCircle(enemy.getLocalTranslation(),86,3,FastMath.nextRandomFloat(),27, 1.5f, BULLET.TALISMAN_R);
+        if(!(spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)) {
+            //Reset position
+            if(!unMoved) {
+                enemy.moveTo(Vector3f.ZERO, 0.01f);
+            }
+            enemy.moveTo(new Vector3f(FastMath.nextRandomFloat()*10,FastMath.nextRandomFloat()*10,0f),0.001f);
+            if(spellTimer[1] > 1.5 && !spellcard3_2) {
+                spellcard3_2 = true;
+                fireStraightLine(enemy.getLocalTranslation(),player.getLocalTranslation(), 4,0, 8,2,BULLET.TALISMAN_R);
+            }
+            if(spellTimer[1] > 3 && !spellcard3_1) {
+                fireStraightCircle(enemy.getLocalTranslation(),92,4,FastMath.nextRandomFloat(),35, 2f, BULLET.TALISMAN_R);
+                fireStraightCircle(enemy.getLocalTranslation(),86,3,FastMath.nextRandomFloat(),27, 1.5f, BULLET.TALISMAN_R);
 
-            fireStraightCircle(enemy.getLocalTranslation(),3,1,FastMath.nextRandomFloat(),28, 2f, BULLET.BALLSHOT_R);
-            fireStraightCircle(enemy.getLocalTranslation(),55,2,FastMath.nextRandomFloat(),34f, 1.7f, BULLET.TALISMAN_R);
-            fireStraightCircle(enemy.getLocalTranslation(),48,3,FastMath.nextRandomFloat(),35, 1.7f, BULLET.TALISMAN_R);
+                fireStraightCircle(enemy.getLocalTranslation(),3,1,FastMath.nextRandomFloat(),28, 2f, BULLET.BALLSHOT_R);
+                fireStraightCircle(enemy.getLocalTranslation(),55,2,FastMath.nextRandomFloat(),34f, 1.7f, BULLET.TALISMAN_R);
+                fireStraightCircle(enemy.getLocalTranslation(),48,3,FastMath.nextRandomFloat(),35, 1.7f, BULLET.TALISMAN_R);
 
-            fireStraightCircle(enemy.getLocalTranslation(),8,1,FastMath.nextRandomFloat(),36, 2f, BULLET.BALLSHOT_W);
-            fireStraightCircle(enemy.getLocalTranslation(),55,2,FastMath.nextRandomFloat(),37, 1.7f, BULLET.TALISMAN_R);
-            fireStraightCircle(enemy.getLocalTranslation(),48,3,FastMath.nextRandomFloat(),19, 1.7f, BULLET.TALISMAN_R);
-           spellcard3_1 = true;
-        }
-        if(spellTimer[1] > 3.1 && !spellcard3_1_2) {
-            fireStraightCircle(enemy.getLocalTranslation(),75,3,FastMath.nextRandomFloat(),42.5f,2f,BULLET.TALISMAN_R);
-            fireStraightCircle(enemy.getLocalTranslation(),6,1,FastMath.nextRandomFloat(),40.5f,1.5f,BULLET.BALLSHOT_W);
-            fireStraightCircle(enemy.getLocalTranslation(),45,2,FastMath.nextRandomFloat(),39,2f,BULLET.TALISMAN_R);
-           spellcard3_1_2 = true;
-        }
-        if(spellTimer[1] > 3.2 && !spellcard3_1_3) {
-            fireStraightCircle(enemy.getLocalTranslation(),7,1,FastMath.nextRandomFloat(),39.5f,2f,BULLET.BALLSHOT_R);
-            fireStraightCircle(enemy.getLocalTranslation(),55,2,FastMath.nextRandomFloat(),31.5f,1.7f,BULLET.TALISMAN_R);
-            fireStraightCircle(enemy.getLocalTranslation(),48,3,FastMath.nextRandomFloat(),21,1.7f,BULLET.TALISMAN_R);
-           spellcard3_1_3 = true;
-        }
-        if(spellTimer[1] > 4) {
-            spellTimer[1] = 0;
-            spellcard3_2 = false;
-            spellcard3_1 = false;
-            spellcard3_1_2 = false;
-            spellcard3_1_3 = false;
+                fireStraightCircle(enemy.getLocalTranslation(),8,1,FastMath.nextRandomFloat(),36, 2f, BULLET.BALLSHOT_W);
+                fireStraightCircle(enemy.getLocalTranslation(),55,2,FastMath.nextRandomFloat(),37, 1.7f, BULLET.TALISMAN_R);
+                fireStraightCircle(enemy.getLocalTranslation(),48,3,FastMath.nextRandomFloat(),19, 1.7f, BULLET.TALISMAN_R);
+               spellcard3_1 = true;
+            }
+            if(spellTimer[1] > 3.1 && !spellcard3_1_2) {
+                fireStraightCircle(enemy.getLocalTranslation(),75,3,FastMath.nextRandomFloat(),42.5f,2f,BULLET.TALISMAN_R);
+                fireStraightCircle(enemy.getLocalTranslation(),6,1,FastMath.nextRandomFloat(),40.5f,1.5f,BULLET.BALLSHOT_W);
+                fireStraightCircle(enemy.getLocalTranslation(),45,2,FastMath.nextRandomFloat(),39,2f,BULLET.TALISMAN_R);
+               spellcard3_1_2 = true;
+            }
+            if(spellTimer[1] > 3.2 && !spellcard3_1_3) {
+                fireStraightCircle(enemy.getLocalTranslation(),7,1,FastMath.nextRandomFloat(),39.5f,2f,BULLET.BALLSHOT_R);
+                fireStraightCircle(enemy.getLocalTranslation(),55,2,FastMath.nextRandomFloat(),31.5f,1.7f,BULLET.TALISMAN_R);
+                fireStraightCircle(enemy.getLocalTranslation(),48,3,FastMath.nextRandomFloat(),21,1.7f,BULLET.TALISMAN_R);
+               spellcard3_1_3 = true;
+            }
+            if(spellTimer[1] > 4) {
+                spellTimer[1] = 0;
+                spellcard3_2 = false;
+                spellcard3_1 = false;
+                spellcard3_1_2 = false;
+                spellcard3_1_3 = false;
+            }
         }
         closeSpell(STAGE1_3,60,150,tpf);
     }
@@ -2957,76 +3031,80 @@ public class Main extends SimpleApplication {
     GameObject spell4familiar2 = new GameObject("spell4familiar2");
     private void stage1spell4(float tpf) {
         openSpell(1, 4, 9, 250, tpf);
-        spellCircle.rotate(0,0,tpf);
-        if(!spellFlag[9]) {
-            spell4familiar1.attachChild(ballShotR.clone().scale(2));
-            spell4familiar2.attachChild(ballShotB.clone().scale(2));
-            bulletNode.attachChild(spell4familiar1);
-            bulletNode.attachChild(spell4familiar2);
-            spellFlag[9] = true;
-        }
+        if(!(spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)) {
+            if(!spellFlag[9]) {
+                spell4familiar1.attachChild(ballShotR.clone().scale(2));
+                spell4familiar2.attachChild(ballShotB.clone().scale(2));
+                bulletNode.attachChild(spell4familiar1);
+                bulletNode.attachChild(spell4familiar2);
+                spellFlag[9] = true;
+            }
 
-        spell4familiar1.setX(FastMath.cos(spellTimer[0]*3)*15);
-        spell4familiar1.setY(FastMath.sin(spellTimer[0]*3)*15);
-        spell4familiar2.setLocalTranslation(new Vector3f(FastMath.cos(-(spellTimer[0] + 3.14f)*3) * 15, FastMath.sin(-(spellTimer[0] + 3.14f)*3) * 15, 0).add(enemy.getPos()));
-        spell4familiar1.setZ(0);
-        spell4familiar1.setPos(spell4familiar1.getPos().add(enemy.getPos()));
-        spell4familiarVector.set(spell4familiar1.getLocalTranslation().subtract(enemy.getLocalTranslation()).mult(3));
-        spell4familiarVector2.set(spell4familiar2.getLocalTranslation().subtract(enemy.getLocalTranslation()).mult(3));
-        if(spellTimer[1] > 0.04) {
-            fireStraightLine(spell4familiar1.getPos(), spell4familiarVector, 4, 1.7f, 26f, 0.7f, BULLET.TALISMAN_R);
-            fireStraightLine(spell4familiar2.getPos(), spell4familiarVector2, 4, -1.7f, 26f, 0.7f, BULLET.TALISMAN_B);
-            spellTimer[1] = 0;
-        }
-        if(spellTimer[2] > 3 && !spellFlag[7]) {/*
-            fireCurveShot1(enemy.getPos(), enemy.getPos().add(-10,0,0), player.getPos().add(10,0,0), 24f, 1f, BALLSHOT_W);
-            fireCurveShot1(enemy.getPos(), enemy.getPos().add(10,0,0), player.getPos().add(-10,0,0), 24f, 1f, BALLSHOT_R);
-            fireCurveShot1(enemy.getPos(), enemy.getPos().add(-10,0,0), player.getPos().add(10,0,0), 32f, 1f, BALLSHOT_W);
-            fireCurveShot1(enemy.getPos(), enemy.getPos().add(10,0,0), player.getPos().add(-10,0,0), 32f, 1f, BALLSHOT_R);
-            fireCurveShot1(enemy.getPos(), enemy.getPos().add(-10,0,0), player.getPos().add(10,0,0), 48f, 1f, BALLSHOT_W);
-            fireCurveShot1(enemy.getPos(), enemy.getPos().add(10,0,0), player.getPos().add(-10,0,0), 48f, 1f, BALLSHOT_R);*/
-            fireStraightLine(enemy.getPos(), player.getPos(), 6, 0.1f, 64f, 1.5f, BULLET.TALISMAN_B);
-            fireStraightLine(enemy.getPos(), player.getPos(), 6, 0.05f, 58f, 1.5f, BULLET.TALISMAN_R);
-            fireStraightLine(enemy.getPos(), player.getPos(), 6, -0.1f, 52f, 1.5f, BULLET.TALISMAN_B);
-            fireStraightLine(enemy.getPos(), player.getPos(), 6, -0.05f, 46f, 1.5f, BULLET.TALISMAN_R);
-            fireStraightLine(enemy.getPos(), player.getPos(), 6, 0, 40f, 1.5f, BULLET.TALISMAN_B);
-            spellFlag[7] = true;
-        }
-        if(spellTimer[2] > 3 && !spellFlag[1]) {
-            spellFlag[1] = true;
-            fireStraightCircle(enemy.getLocalTranslation(), 48, 3, FastMath.nextRandomFloat(), 21, 1.7f, BULLET.TALISMAN_B);
-        }
-        if(spellTimer[2] > 4 && !spellFlag[2]) {
-            //fireStraightCircle(enemy.getLocalTranslation(), 48, 3, FastMath.nextRandomFloat(), 21, 1.7f, BALLSHOT_W);
-            spellTimer[2] = 0;
-            spellFlag[7] = false;
-            spellFlag[1] = false;
-            spellFlag[2] = false;
+            spell4familiar1.setX(FastMath.cos(spellTimer[0]*3)*15);
+            spell4familiar1.setY(FastMath.sin(spellTimer[0]*3)*15);
+            spell4familiar2.setLocalTranslation(new Vector3f(FastMath.cos(-(spellTimer[0] + 3.14f)*3) * 15, FastMath.sin(-(spellTimer[0] + 3.14f)*3) * 15, 0).add(enemy.getPos()));
+            spell4familiar1.setZ(0);
+            spell4familiar1.setPos(spell4familiar1.getPos().add(enemy.getPos()));
+            spell4familiarVector.set(spell4familiar1.getLocalTranslation().subtract(enemy.getLocalTranslation()).mult(3));
+            spell4familiarVector2.set(spell4familiar2.getLocalTranslation().subtract(enemy.getLocalTranslation()).mult(3));
+            if(spellTimer[1] > 0.04) {
+                fireStraightLine(spell4familiar1.getPos(), spell4familiarVector, 4, 1.7f, 26f, 0.7f, BULLET.TALISMAN_R);
+                fireStraightLine(spell4familiar2.getPos(), spell4familiarVector2, 4, -1.7f, 26f, 0.7f, BULLET.TALISMAN_B);
+                spellTimer[1] = 0;
+            }
+            if(spellTimer[2] > 3 && !spellFlag[7]) {/*
+                fireCurveShot1(enemy.getPos(), enemy.getPos().add(-10,0,0), player.getPos().add(10,0,0), 24f, 1f, BALLSHOT_W);
+                fireCurveShot1(enemy.getPos(), enemy.getPos().add(10,0,0), player.getPos().add(-10,0,0), 24f, 1f, BALLSHOT_R);
+                fireCurveShot1(enemy.getPos(), enemy.getPos().add(-10,0,0), player.getPos().add(10,0,0), 32f, 1f, BALLSHOT_W);
+                fireCurveShot1(enemy.getPos(), enemy.getPos().add(10,0,0), player.getPos().add(-10,0,0), 32f, 1f, BALLSHOT_R);
+                fireCurveShot1(enemy.getPos(), enemy.getPos().add(-10,0,0), player.getPos().add(10,0,0), 48f, 1f, BALLSHOT_W);
+                fireCurveShot1(enemy.getPos(), enemy.getPos().add(10,0,0), player.getPos().add(-10,0,0), 48f, 1f, BALLSHOT_R);*/
+                fireStraightLine(enemy.getPos(), player.getPos(), 6, 0.1f, 64f, 1.5f, BULLET.TALISMAN_B);
+                fireStraightLine(enemy.getPos(), player.getPos(), 6, 0.05f, 58f, 1.5f, BULLET.TALISMAN_R);
+                fireStraightLine(enemy.getPos(), player.getPos(), 6, -0.1f, 52f, 1.5f, BULLET.TALISMAN_B);
+                fireStraightLine(enemy.getPos(), player.getPos(), 6, -0.05f, 46f, 1.5f, BULLET.TALISMAN_R);
+                fireStraightLine(enemy.getPos(), player.getPos(), 6, 0, 40f, 1.5f, BULLET.TALISMAN_B);
+                spellFlag[7] = true;
+            }
+            if(spellTimer[2] > 3 && !spellFlag[1]) {
+                spellFlag[1] = true;
+                fireStraightCircle(enemy.getLocalTranslation(), 48, 3, FastMath.nextRandomFloat(), 21, 1.7f, BULLET.TALISMAN_B);
+            }
+            if(spellTimer[2] > 4 && !spellFlag[2]) {
+                //fireStraightCircle(enemy.getLocalTranslation(), 48, 3, FastMath.nextRandomFloat(), 21, 1.7f, BALLSHOT_W);
+                spellTimer[2] = 0;
+                spellFlag[7] = false;
+                spellFlag[1] = false;
+                spellFlag[2] = false;
+            }
+        } else {
+            spell4familiar1.removeFromParent();
+            spell4familiar2.removeFromParent();
         }
         closeSpell(STAGE1_4, 60, 90, tpf);
     }
 
     private void stage1spell5(float tpf) {
         openSpell(1,5,5,250,tpf);
-        spellCircle.rotate(0,0,tpf);
-
-        if(!spellFlag[3]) {
-            System.out.println("Stage 1 Spell 5");
-            spellFlag[3] = true;
-        }
-        if(spellTimer[1] > 0.3) {
-            fireSpeedCircle(enemy.getLocalTranslation(), 36, 1, spellTimer[0] * tpf * 20+FastMath.rand.nextFloat(), 20, 4f, 4, 1, BULLET.TALISMAN_R);
-            //fireSpeedCircle(enemy.getPos(), 16, 1, spellTimer[0], 30, 1f, 20, 1, TALISMAN_R);
-            spellTimer[1] = 0;
-        }
-        if(spellTimer[2] > 6) {
-           //fireStraightCircle(enemy.getPos(), (int)(64 + spellTimer[0] * 5), 1, FastMath.rand.nextFloat(), 40, 1, TALISMAN_B);
-            spellFlag[3] = true;
-        }
-        if(spellFlag[3] && spellTimer[3] > 0.2) {
-            fireUncannySealCircle(enemy.getPos(), 4, 1, 2, 2, 1, true, spellTimer[0], 20, 1, BULLET.TALISMAN_B);
-            fireUncannySealCircle(enemy.getPos(), 4, 1, 2, 2, 1, false, spellTimer[0], 20, 1, BULLET.TALISMAN_B);
-            spellTimer[3] = 0;
+        if(!(spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)){
+            if(!spellFlag[3]) {
+                System.out.println("Stage 1 Spell 5");
+                spellFlag[3] = true;
+            }
+            if(spellTimer[1] > 0.3) {
+                fireSpeedCircle(enemy.getLocalTranslation(), 36, 1, spellTimer[0] * tpf * 20+FastMath.rand.nextFloat(), 20, 4f, 4, 1, BULLET.TALISMAN_R);
+                //fireSpeedCircle(enemy.getPos(), 16, 1, spellTimer[0], 30, 1f, 20, 1, TALISMAN_R);
+                spellTimer[1] = 0;
+            }
+            if(spellTimer[2] > 6) {
+               //fireStraightCircle(enemy.getPos(), (int)(64 + spellTimer[0] * 5), 1, FastMath.rand.nextFloat(), 40, 1, TALISMAN_B);
+                spellFlag[3] = true;
+            }
+            if(spellFlag[3] && spellTimer[3] > 0.2) {
+                fireUncannySealCircle(enemy.getPos(), 4, 1, 2, 2, 1, true, spellTimer[0], 20, 1, BULLET.TALISMAN_B);
+                fireUncannySealCircle(enemy.getPos(), 4, 1, 2, 2, 1, false, spellTimer[0], 20, 1, BULLET.TALISMAN_B);
+                spellTimer[3] = 0;
+            }
         }
         closeSpell(STAGE1_5,60,150,tpf);
     }
@@ -3037,31 +3115,32 @@ public class Main extends SimpleApplication {
     float s1s6speed = 25;
     private void stage1spell6(float tpf) {
         openSpell(1, 6, 5, 250, tpf);
-        spellCircle.rotate(0,0,tpf);
-        //Spell vars:
-        //4 : offset time
-        //5 : offset control
-        if(spellTimer[4] > 9) {
-            spellTimer[4] = 0;
-            spellFlag[5] = !spellFlag[5];
-        }
-        //bloomFilter.setBloomIntensity(spellTimer[0]);
-        if(spellFlag[5]) {
-            spellTimer[5] += tpf*0.1f;
-        } else {
-            spellTimer[5] -= tpf*0.1f;
-        }
-        if(spellTimer[1] > 0.1) {
-            fireUncannySealCircle(enemy.getLocalTranslation(),8,t1,t2, 0.1f,-0.4f, true, spellTimer[5],  s1s6speed, 1,BULLET.TALISMAN_R);
-            fireUncannySealCircle(enemy.getLocalTranslation(),8,t1,t2, 0.1f,-0.4f, false, spellTimer[5],  s1s6speed, 1,BULLET.TALISMAN_R);
-            fireUncannySealCircle(enemy.getLocalTranslation(),8,t1,t2, 1f,-1f, true, spellTimer[5],  s1s6speed, 1,BULLET.TALISMAN_B);
-            fireUncannySealCircle(enemy.getLocalTranslation(),8,t1,t2, 1f,-1f, false, spellTimer[5],  s1s6speed, 1,BULLET.TALISMAN_B);
-            fireStraightCircle(enemy.getPos(), 8, 1, spellTimer[5],  s1s6speed, 1, BULLET.TALISMAN_B);
-            spellTimer[1] = 0;
-        }
-        if(spellTimer[2] > 0.3) {
-            fireSpeedCircle(enemy.getPos(), 32, 1, spellTimer[0], 60, 0.5f, 16, 1, BULLET.PILLSHOT_R);
-            spellTimer[2] = 0;
+        if(!(spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)) {
+            //Spell vars:
+            //4 : offset time
+            //5 : offset control
+            if(spellTimer[4] > 9) {
+                spellTimer[4] = 0;
+                spellFlag[5] = !spellFlag[5];
+            }
+            //bloomFilter.setBloomIntensity(spellTimer[0]);
+            if(spellFlag[5]) {
+                spellTimer[5] += tpf*0.1f;
+            } else {
+                spellTimer[5] -= tpf*0.1f;
+            }
+            if(spellTimer[1] > 0.1) {
+                fireUncannySealCircle(enemy.getLocalTranslation(),8,t1,t2, 0.1f,-0.4f, true, spellTimer[5],  s1s6speed, 1,BULLET.TALISMAN_R);
+                fireUncannySealCircle(enemy.getLocalTranslation(),8,t1,t2, 0.1f,-0.4f, false, spellTimer[5],  s1s6speed, 1,BULLET.TALISMAN_R);
+                fireUncannySealCircle(enemy.getLocalTranslation(),8,t1,t2, 1f,-1f, true, spellTimer[5],  s1s6speed, 1,BULLET.TALISMAN_B);
+                fireUncannySealCircle(enemy.getLocalTranslation(),8,t1,t2, 1f,-1f, false, spellTimer[5],  s1s6speed, 1,BULLET.TALISMAN_B);
+                fireStraightCircle(enemy.getPos(), 8, 1, spellTimer[5],  s1s6speed, 1, BULLET.TALISMAN_B);
+                spellTimer[1] = 0;
+            }
+            if(spellTimer[2] > 0.3) {
+                fireSpeedCircle(enemy.getPos(), 32, 1, spellTimer[0], 60, 0.5f, 16, 1, BULLET.PILLSHOT_R);
+                spellTimer[2] = 0;
+            }
         }
         closeSpell(STAGE1_6,90,50,tpf);
     }
@@ -4886,6 +4965,37 @@ public class Main extends SimpleApplication {
         }
     }
     private void stage5spell1(float tpf) {
+                openSpell(5,1,20,250,tpf);
+        //Familiar shoots balls from top center
+        //enemy slashes back and forth, cutting bullets
+        //bullets in enemy path get split into several smaller bullets
+        int INIT = 1;
+        int FAM_BULLET_TIMER = 2;
+
+        if(!spellFlag[INIT]) {
+            gameFlag[STAGE5_1] = false;
+
+            spellFlag[INIT] = true;
+            enemy.moveTo(playerMaxSide, 0, 0, 4);
+            spellTimer[3] = 1.5f;
+        }
+        if(!(spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)){
+            if(spellTimer[FAM_BULLET_TIMER] > 3) {
+                fireStraightLine(enemy.getPos(), Vector3f.ZERO, 1,FastMath.nextRandomFloat()-0.5f,12,  FastMath.nextRandomInt(1,2), BULLET.ARROWSHOT_P);
+                fireSpeedCircle(Vector3f.ZERO.add(-10,10,0), 12, 12, spellTimer[3], 0.5f, 2, 19, 1, BULLET.BALLSHOT_P);
+                fireSpeedCircle(Vector3f.ZERO.add(10,10,0), 12, 12, spellTimer[3], 0.5f, 2, 19, 1, BULLET.BALLSHOT_P);
+                spellTimer[FAM_BULLET_TIMER] = 0;
+            }
+            if(spellTimer[3] > 3) {
+                fireSpeedCircle(Vector3f.ZERO.add(30,0,0), 12, 12, 0, 0.5f, 2, 19, 1, BULLET.BALLSHOT_P);
+                fireSpeedCircle(Vector3f.ZERO.add(-30,0,0), 12, 12, 0, 0.5f, 2, 19, 1, BULLET.BALLSHOT_P);
+                spellTimer[3] = 0;
+            }
+        }
+        closeSpell(STAGE5_1,60,150,tpf);
+        if((spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)) {
+            timescale = 1;
+        }
     }
     private void stage5spell2(float tpf) {
     }
@@ -5535,9 +5645,9 @@ public class Main extends SimpleApplication {
                     if(!advanceEventTime) {//Handle Z for continuing dialogue
                         advanceEventTime = true;
                         dialogue.setText("");
-                        dialogueActive = false;
                         dialoguePlayer = false;
                         dialogueEnemy = false;
+                        dialogueActive = false;
                     } else {//Handle z key for shooting: [03 27 2011]
                         if(heat > 100) {
                             firePlayerShot1(player.getLocalTranslation(), enemy.getLocalTranslation(), 35, 2, BULLET.ARROWSHOT_R);
@@ -5661,16 +5771,25 @@ public class Main extends SimpleApplication {
         menuMark.setMaterial(menuMarkMat);
     }
     
+    float lastX;
+    float lastY;
+    Vector2f menuMarkVec;
     public void handleMainMenuMouse(float tpf) {
-        Vector3f origin    = cam.getWorldCoordinates(inputManager.getCursorPosition(), 0.0f);
-        Vector3f direction = cam.getWorldCoordinates(inputManager.getCursorPosition(), 0.3f);
+        menuMark.move(inputManager.getCursorPosition().x - lastX, inputManager.getCursorPosition().y - lastY, 0);
+        if(menuMarkVec == null) {
+            menuMarkVec = new Vector2f();
+        }
+        menuMarkVec.set(menuMark.getLocalTranslation().x, menuMark.getLocalTranslation().y);
+        Vector3f origin    = cam.getWorldCoordinates(menuMarkVec, 0.0f);
+        Vector3f direction = cam.getWorldCoordinates(menuMarkVec, 0.3f);
 
         direction.subtractLocal(origin).normalizeLocal();
         String activeItem = new String();
         Ray ray = new Ray(origin, direction);
         CollisionResults results = new CollisionResults();
         titleUIElements.collideWith(ray, results);
-        menuMark.setLocalTranslation(inputManager.getCursorPosition().x,inputManager.getCursorPosition().y,0);
+        //menuMark.setLocalTranslation(inputManager.getCursorPosition().x,inputManager.getCursorPosition().y,0);
+        
         if(!guiNode.hasChild(menuMark)) {
             guiNode.attachChild(menuMark);
         }
@@ -5707,6 +5826,9 @@ public class Main extends SimpleApplication {
                 exitButtonMat.setColor("Color", new ColorRGBA(1,1,1, titleAlpha[2]));
             }
         }
+        
+        lastX = inputManager.getCursorPosition().x;
+        lastY = inputManager.getCursorPosition().y;
     }
     
     Vector3f curMouseVec = new Vector3f();

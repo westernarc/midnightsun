@@ -60,12 +60,12 @@ public class FadeFilterConst extends Filter {
             //value += tpf * direction / duration;
             value += 1/60f * direction / duration;
             
-            if (direction > 0 && value > 1) {
+            if (value > 1) {
                 value = 1;
                 playing = false;
                 setEnabled(false);
             }
-            if (direction < 0 && value < 0) {
+            if (value < 0) {
                 value = 0;
                 playing = false;
                 setEnabled(false);

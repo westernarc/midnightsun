@@ -65,6 +65,7 @@ import com.jme3.post.filters.DepthOfFieldFilter;
 import com.jme3.post.filters.FadeFilter;
 import com.jme3.post.filters.LightScatteringFilter;
 import com.jme3.post.filters.RadialBlurFilter;
+import com.jme3.renderer.Camera;
 import com.jme3.renderer.queue.RenderQueue.Bucket;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
@@ -141,7 +142,8 @@ public class Main extends SimpleApplication {
                 case OPENSPLASH: return "MAINMENU";
                 case MAINMENU: return "START";
                 case START: return "GAME";
-                case END: return "PREGAME";
+                case GAME: return "END";
+                case END: return "MAINMENU";
                 default: return "PREGAME";
             }
         }
@@ -151,7 +153,8 @@ public class Main extends SimpleApplication {
                 case OPENSPLASH: return MAINMENU;
                 case MAINMENU: return START;
                 case START: return GAME;
-                case END: return PREGAME;
+                case GAME: return END;
+                case END: return MAINMENU;
                 default: return PREGAME;
             }
         }
@@ -181,7 +184,7 @@ public class Main extends SimpleApplication {
     boolean advanceEventTime;   //Event line paused
     boolean spellcardActive;    //Stores whether a spellcard is active
     boolean stageActive;        //Like spellcardActive, but only for stagen_0
-    boolean debug = false; //skips to game
+    boolean debug = true; //skips to game
     boolean mute = true; //mutes
     boolean gamePause = false;      //Stores whether game paused
     boolean gameOverFlag = false;   //Stores whether game over
@@ -190,7 +193,8 @@ public class Main extends SimpleApplication {
     boolean dialogueActive = false; //Someone is talking
     boolean dialoguePlayer = false; //Player is talking
     boolean dialogueEnemy = false;  //Enemy is talking
-
+    boolean gameWin = false;        //Game beaten
+    
     //Player variables
     boolean MOVE_STAND = true;  //Not moving
     boolean MOVE_UP = false;    //Moving up
@@ -395,7 +399,6 @@ public class Main extends SimpleApplication {
                         //just the player and enemy.
     Node backNode;  //Where the sky/ground goes.
 
-
     //Animation
     AnimChannel playerAnimChan;
     AnimControl playerAnimCont;
@@ -478,6 +481,14 @@ public class Main extends SimpleApplication {
     float focusLimit = 200;
     //---------------------------------------------------------
 
+    //Game end
+    GuiImage endgameImage;
+    Box endgameImageModel;
+    Material endgameImageMat;
+    
+    BitmapText endgameText;
+    Rectangle endgameTextBounds;
+    
     public static void main(String[] args) {
         Main app = new Main();
         app.setShowSettings(false);
@@ -498,6 +509,8 @@ public class Main extends SimpleApplication {
     public void simpleInitApp() {
         flyCam.setEnabled(false);
         currentGameState = STATE.PREGAME;
+        //currentGameState = STATE.END;
+                
         //inputManager.clearMappings();
         //inputManager.removeListener(flyCam);
         inputManager.setCursorVisible(true);
@@ -507,12 +520,12 @@ public class Main extends SimpleApplication {
         fadeFilter = new FadeFilterConst();
         fadeFilter.setDuration(0.6f);
         filtPostProc.addFilter(fadeFilter);
-        
+        /*
         DepthOfFieldFilter dofFilter = new DepthOfFieldFilter();
         dofFilter.setFocusDistance(0);
         dofFilter.setFocusRange(150);
         dofFilter.setBlurScale(1.2f);
-        filtPostProc.addFilter(dofFilter);
+        filtPostProc.addFilter(dofFilter);*/
         viewPort.addProcessor(filtPostProc);
         
         //Prepare main menu background movie frames
@@ -948,6 +961,7 @@ public class Main extends SimpleApplication {
         dialoguePlayer = false;
         dialogueEnemy = false;
         spawnDone = false;
+        gameWin = false;
         for(int i = 0; i < dialogueCount; i++) {
             dialogueFlag[i] = false;
         }
@@ -1114,16 +1128,16 @@ public class Main extends SimpleApplication {
         portraitEnemy.move(screenWidth + 100, portraitEnemy.getHeight(), 0);
         guiNode.attachChild(portraitEnemy);
 
-        dialogueNodeModel = new Box(screenWidth, guiFont.getCharSet().getRenderedSize()*2.7f,0);
+        dialogueNodeModel = new Box(screenWidth, 46,0);
         dialogueNode = new GuiImage("DialogueNode", dialogueNodeModel);
         dialogueNode.setWidth(screenWidth);
-        dialogueNode.setHeight(Math.round(guiFont.getCharSet().getRenderedSize()*2.7f));
+        dialogueNode.setHeight(46);
         dialoguePaneMat = new Material(assetManager, "MatDefs/Unshaded.j3md");
         dialoguePaneMat.setTexture("ColorMap", assetManager.loadTexture("Textures/game/black.png"));
         dialoguePaneMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
         dialogueNode.setMat(dialoguePaneMat);
         guiNode.attachChild(dialogueNode);
-        dialogueNode.setLocalTranslation(0, 0, 0);
+        dialogueNode.setLocalTranslation(0, -100, 0);
         
         //Create a new player object just to avoid null pointers for now
         player = new Player();
@@ -1395,6 +1409,29 @@ public class Main extends SimpleApplication {
     public void initEndGame() {
         System.out.println("Initializing State " + currentGameState);
         rootNode.detachAllChildren();
+        guiNode.detachAllChildren();
+        
+        endgameImageModel = new Box(screenWidth, screenHeight, 0);
+        endgameImage = new GuiImage("screenFadeOverlay", screenFadeOverlayModel);
+        endgameImage.setWidth(screenWidth);
+        endgameImage.setHeight(screenHeight);
+        endgameImageMat = new Material(assetManager, "MatDefs/Unshaded.j3md");
+        endgameImageMat.setTexture("ColorMap", assetManager.loadTexture("Textures/game/blue.png"));
+        endgameImageMat.setColor("Color", new ColorRGBA(0,0,0,screenFadeOverlayAlpha));
+        endgameImageMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
+        endgameImage.setMaterial(endgameImageMat);
+        endgameImage.move(screenWidth/2, screenHeight/2, 10);
+        guiNode.attachChild(endgameImage);
+        
+        endgameText = new BitmapText(guiFont,false);
+        endgameText.setSize(guiFont.getCharSet().getRenderedSize() * 0.5f);
+        endgameTextBounds = new Rectangle(0,0,screenWidth, screenHeight);
+        endgameText.setBox(endgameTextBounds);
+        endgameText.setAlignment(BitmapFont.Align.Center);
+        endgameText.setText("you are a star player!");
+        endgameText.setLocalTranslation(0,screenHeight/2,0);
+        endgameText.setColor(ColorRGBA.White);
+        guiNode.attachChild(endgameText);
     }
 
     public void cleanupOpenSplash() {
@@ -1411,7 +1448,7 @@ public class Main extends SimpleApplication {
         switch(currentGameState) {
             case PREGAME: //Pre-everything state.
                 timer[T_AFTER_STATE_TIME] += 1/60f;
-                if(timer[T_AFTER_STATE_TIME] > transitionTime) {
+                if(fadeFilter.getValue() < 0.95f) {
                     fadeFilter.fadeIn();
                     timer[T_AFTER_STATE_TIME] = 0;
                     currentGameState = STATE.OPENSPLASH;
@@ -1425,7 +1462,7 @@ public class Main extends SimpleApplication {
                         fadeFilter.fadeOut();   //fade it now,
                         stateFade = true;   //and tell the rest of the game
                     }
-                    if(timer[T_AFTER_STATE_TIME] > transitionTime) {  //After fade time
+                    if(fadeFilter.getValue() < 0.05f) {  //After fade time
                         cleanupOpenSplash();
                     }
                 } else {
@@ -1448,7 +1485,7 @@ public class Main extends SimpleApplication {
                         fadeFilter.fadeOut();
                         stateFade = true;
                     }
-                    if(timer[T_AFTER_STATE_TIME] > transitionTime) {
+                    if(fadeFilter.getValue() < 0.05f) {
                         currentGameState = STATE.START;
                         initGameStart();
                         timer[T_AFTER_STATE_TIME] = 0;
@@ -1469,7 +1506,7 @@ public class Main extends SimpleApplication {
                         fadeFilter.fadeOut();
                         stateFade = true;
                     }
-                    if(timer[T_AFTER_STATE_TIME] > transitionTime) {
+                    if(fadeFilter.getValue() < 0.05f) {
                         currentGameState = STATE.GAME;
                         initGame();
                         timer[T_AFTER_STATE_TIME] = 0;
@@ -1487,17 +1524,36 @@ public class Main extends SimpleApplication {
                 }
 
                 if(gameState.isComplete()) {
-                    timer[T_AFTER_STATE_TIME] += 1/60f;
-                    if(!stateFade) {
-                        fadeFilter.fadeOut();
-                        stateFade = true;
-                    }
-                    if(timer[T_AFTER_STATE_TIME] > transitionTime) {  //return to main
-                        unpauseGame();
-                        currentGameState = STATE.MAINMENU;
-                        initMainMenu();
-                        timer[T_AFTER_STATE_TIME] = 0;
-                        System.out.println("Returning to main menu");
+                    //Complete game depending on whether it's a death
+                    //or if the game was beaten
+                    if(gameWin) {
+                        timer[T_AFTER_STATE_TIME] += 1/60f;
+                        if(!stateFade) {
+                            fadeFilter.setDuration(10);
+                            fadeFilter.fadeOut();
+                            stateFade = true;
+                        }
+                        if(fadeFilter.getValue() < 0.05f) {  //return to main
+                            fadeFilter.setDuration(transitionTime);
+                            unpauseGame();
+                            currentGameState = STATE.END;
+                            initEndGame();
+                            timer[T_AFTER_STATE_TIME] = 0;
+                            System.out.println("Going to end state");
+                        }
+                    } else {
+                        timer[T_AFTER_STATE_TIME] += 1/60f;
+                        if(!stateFade) {
+                            fadeFilter.fadeOut();
+                            stateFade = true;
+                        }
+                        if(fadeFilter.getValue() < 0.05f) {  //return to main
+                            unpauseGame();
+                            currentGameState = STATE.MAINMENU;
+                            initMainMenu();
+                            timer[T_AFTER_STATE_TIME] = 0;
+                            System.out.println("Returning to main menu");
+                        }
                     }
                 }
 
@@ -1525,7 +1581,30 @@ public class Main extends SimpleApplication {
                 }
                 break;
             case END:
-                updateEndGame(tpf);
+                //Timer
+                timer[T_EVENT_TIME] += 1/60f;
+                if(stateFade) {  //As always, fade in if faded out.
+                    stateFade = false;
+                    fadeFilter.setDuration(5);
+                    fadeFilter.fadeIn();
+                }
+                
+                if(timer[T_EVENT_TIME] > 10) {  //If open splash is done
+                    if(!stateFade) {  //If the screen isn't faded yet,
+                        fadeFilter.fadeOut();   //fade it now,
+                        stateFade = true;   //and tell the rest of the game
+                    }
+                    if(fadeFilter.getValue() < 0.05f) {  //After fade time
+                        currentGameState = STATE.MAINMENU;  //Advance the game state
+                        initMainMenu(); //Initialize the next state
+                        timer[T_AFTER_STATE_TIME] = 0; //reset the after state timer.
+                        timer[T_EVENT_TIME] = 0;
+                        fadeFilter.setDuration(transitionTime);
+                    }
+                } else {
+                    //If it isn't done, then just update it normally.
+                    updateEndGame(tpf);
+                }
                 break;
         }
     }
@@ -1827,7 +1906,7 @@ public class Main extends SimpleApplication {
                 }
             }
 
-            if(dialogueNode.getLocalTranslation().y < 0) {
+            if(dialogueNode.getLocalTranslation().y + 15 < 0) {
                 dialogueNode.move(0,15f,0);
             } else {
                 dialogueNode.setLocalTranslation(0, 0, 0);
@@ -1846,7 +1925,7 @@ public class Main extends SimpleApplication {
                         portraitEnemy.move(5f,0,0);
                     }
                 }
-                if(dialogueNode.getLocalTranslation().y > -100) {
+                if(dialogueNode.getLocalTranslation().y -15 > -100) {
                     dialogueNode.move(0,-15f,0);
                 } else {
                     dialogueNode.setLocalTranslation(0, -100, 0);
@@ -2294,6 +2373,18 @@ public class Main extends SimpleApplication {
             //stage2spell2(tpf);
             //stage2spell1(tpf);
         }
+         
+        //Demo end block
+        if(timer[T_EVENT_TIME] > 5) {
+            //DEMO END
+            gameState.complete();
+            gameWin = true;
+            //currentGameState = STATE.MAINMENU;
+            //guiNode.detachAllChildren();
+            showDialogue = false;
+            timer[T_EVENT_TIME] = 5;
+        }
+        
         if(timer[T_EVENT_TIME] > 6 && !gameFlag[STAGE1_2]) {
             stage1spell2(tpf);
         }
@@ -2323,8 +2414,14 @@ public class Main extends SimpleApplication {
             dialogueFlag[6] = true;
             gameFlag[STAGE1] = true;
         }
-
+        
         if(timer[T_EVENT_TIME] > 20 && !gameFlag[STAGE2_0] && gameFlag[STAGE1]) {
+            //DEMO END
+            gameState.complete();
+            filtPostProc.removeFilter(radialBlur);
+            fadeFilter.fadeOut();
+            guiNode.detachAllChildren();
+            
             showDialogue = false;
             stage2(tpf);
         }
@@ -2488,12 +2585,6 @@ public class Main extends SimpleApplication {
             say("Come back a century from now.",1);
             dialogueFlag[21] = true;
             gameFlag[STAGE4] = true;
-            
-            //DEMO END
-            gameState.complete();
-            filtPostProc.removeFilter(radialBlur);
-            fadeFilter.fadeOut();
-            guiNode.detachAllChildren();
         }
         if(timer[T_EVENT_TIME] > 63 && !gameFlag[STAGE5_0]) {
             stage5(tpf);
@@ -2602,7 +2693,6 @@ public class Main extends SimpleApplication {
     final static float introSequenceTime4 = 7;
     
     private void introSequence(float tpf) {
-        System.out.println(introBanner.getLocalTranslation().x);
         timer[T_INTRO_TIME] += 1/60f;
         if(introBannerAlpha > 1) {
             introBannerAlpha = 1;
@@ -2654,6 +2744,9 @@ public class Main extends SimpleApplication {
             }
         }
         if(timer[T_INTRO_TIME] > introSequenceTime4) {
+            timer[T_INTRO_TIME] = 0;
+            introBannerEnterDone = false;
+            introBannerExitDone = false;
             introBannerAlpha = 0;
             introBannerMat.setColor("Color", new ColorRGBA(1, 1, 1, introBannerAlpha));
             camFocalPoint.moveTo(gameFocalPoint, 1f);
@@ -3150,42 +3243,42 @@ public class Main extends SimpleApplication {
         if(!spellFlag[3]) {
             System.out.println("Stage "+stage+" Spell L");
             spellFlag[3] = true;
-            gameFlag[52] = false;
-            gameFlag[51] = false;
-            gameFlag[50] = false;
-            gameFlag[53] = false;
+            gameFlag[80] = false;
+            gameFlag[81] = false;
+            gameFlag[82] = false;
+            gameFlag[83] = false;
         }
-        if(spellTimer[0] > 0 && !gameFlag[52]) {
+        if(spellTimer[0] > 0 && !gameFlag[80]) {
             clearBullets();
-            gameFlag[52] = true;
+            gameFlag[80] = true;
             enemy.moveTo(new Vector3f(50,-200,0), 0.2f);
             enemyDeathSequence();
         }
-        if(spellTimer[0] > 3 && !gameFlag[50]) {
+        if(spellTimer[0] > 3 && !gameFlag[82]) {
             System.out.println("Stage "+stage+" Closing");
             enemyDeathEmitter.emitAllParticles();
             enemyDeathEmitter.setParticlesPerSec(0);
             
-            gameFlag[50] = true;
+            gameFlag[82] = true;
             gameFlag[GFLAG_SCORE] = true;
             //stageClearDisplay1.setText("STAGE "+stage+" CLEAR");
         }
-        if(spellTimer[0] > 5 && !gameFlag[51]) {
+        if(spellTimer[0] > 5 && !gameFlag[81]) {
             //fadeGame(tpf,false);
             //if(stageClearDisplay1.getLocalTranslation().x < (screenWidth)/2) {
             //    stageClearDisplay1.move(7,0,0);
             //}
             if(spellTimer[0] > 6) {
-                gameFlag[51] = true;
+                gameFlag[81] = true;
             }
         }
-        if((spellTimer[0] > 8 && !gameFlag[53])) {
+        if((spellTimer[0] > 8 && !gameFlag[83])) {
             //if(stageClearDisplay1.getLocalTranslation().x > -screenWidth/2) {
                 //stageClearDisplay1.move(-12,0,0);
             //}
             if(spellTimer[0] > 8.7) {
                 //stageClearDisplay1.setLocalTranslation(-screenWidth/2, screenHeight/2, 11);
-                gameFlag[53] = true;
+                gameFlag[83] = true;
                 spellFlag[SFLAG_ZWAIT] = true;
                 gameFlag[GFLAG_SCORE] = false;
             }
@@ -5482,7 +5575,7 @@ public class Main extends SimpleApplication {
     //----------------------------------------------------------------------------------
     //----------------------------------------------------------------------------------
     public void updateEndGame(float tpf) {
-
+        //System.out.println("update end game");
     }
 
     //Input handling inner classes

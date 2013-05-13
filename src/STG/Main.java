@@ -489,6 +489,10 @@ public class Main extends SimpleApplication {
     BitmapText endgameText;
     Rectangle endgameTextBounds;
     
+    PanelNode endBackground;
+    Spatial endBackgroundModel;
+    Material endBackgroundMat;
+    
     public static void main(String[] args) {
         Main app = new Main();
         app.setShowSettings(false);
@@ -658,7 +662,7 @@ public class Main extends SimpleApplication {
         menuMark.setLocalTranslation(screenWidth/2, screenHeight / 2, 0);
         inputManager.setCursorVisible(false);
         
-        
+        filtPostProc.removeFilter(radialBlur);
         initMainMenuBindings();
     }
 
@@ -1406,32 +1410,56 @@ public class Main extends SimpleApplication {
         inputManager.addListener(gameListener, new String[]{"left","right","up","down","focus","pause","shoot"});
     }
 
+    PanelNode endgamePanel;
+    ColorRGBA endgameTextColor;
+    ColorRGBA endgameImageColor;
     public void initEndGame() {
         System.out.println("Initializing State " + currentGameState);
         rootNode.detachAllChildren();
-        guiNode.detachAllChildren();
-        
-        endgameImageModel = new Box(screenWidth, screenHeight, 0);
+        //guiNode.detachAllChildren();
+        //guiNode.
+        endgameImageModel = new Box(1280, 5000, 0);
         endgameImage = new GuiImage("screenFadeOverlay", screenFadeOverlayModel);
-        endgameImage.setWidth(screenWidth);
-        endgameImage.setHeight(screenHeight);
+        endgameImage.setWidth(1280);
+        endgameImage.setHeight(5000);
         endgameImageMat = new Material(assetManager, "MatDefs/Unshaded.j3md");
-        endgameImageMat.setTexture("ColorMap", assetManager.loadTexture("Textures/game/blue.png"));
-        endgameImageMat.setColor("Color", new ColorRGBA(0,0,0,screenFadeOverlayAlpha));
+        endgameImageColor = new ColorRGBA(1,1,1,0);
+        endgameImageMat.setTexture("ColorMap", assetManager.loadTexture("Textures/endgame/background.png"));
+        endgameImageMat.setColor("Color", endgameImageColor);
         endgameImageMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
         endgameImage.setMaterial(endgameImageMat);
-        endgameImage.move(screenWidth/2, screenHeight/2, 10);
-        guiNode.attachChild(endgameImage);
+        endgameImage.move(screenWidth/2, screenHeight, -1);
+        //guiNode.attachChild(endgameImage);
         
         endgameText = new BitmapText(guiFont,false);
         endgameText.setSize(guiFont.getCharSet().getRenderedSize() * 0.5f);
         endgameTextBounds = new Rectangle(0,0,screenWidth, screenHeight);
         endgameText.setBox(endgameTextBounds);
         endgameText.setAlignment(BitmapFont.Align.Center);
-        endgameText.setText("you are a star player!");
+        endgameTextColor = new ColorRGBA(1,1,1,0);
+        endgameText.setText("and so a long night concludes\nthe trial of guts has ended\n\ncongratulations! demo clear!");
         endgameText.setLocalTranslation(0,screenHeight/2,0);
-        endgameText.setColor(ColorRGBA.White);
+        endgameText.setColor(endgameTextColor);
         guiNode.attachChild(endgameText);
+        
+        endBackground = new PanelNode("endBackgroundPanel");
+        endBackground.setModel(assetManager.loadModel("Models/end/endpanel.j3o"));
+        endBackground.setMat(new Material(assetManager, "MatDefs/Unshaded.j3md"));
+        endBackground.getMat().setTexture("ColorMap", assetManager.loadTexture(new TextureKey("Textures/endgame/background.png",false)));
+        //endBackgroundMat.getAdditionalRenderState().setBlendMode(BlendMode.Off);
+        endBackground.getMat().getAdditionalRenderState().setFaceCullMode(FaceCullMode.Off);
+        //55 to -64
+        endBackground.setLocalTranslation(0,55f,0);
+        endBackground.scale(6.2f);
+        //endBackground.getMat().setTexture("ColorMap", nedBackgroundMat);
+        rootNode.attachChild(endBackground);
+        /*
+        DirectionalLight openSplashLight = new DirectionalLight();
+        openSplashLight.setDirection(new Vector3f(0f, 0f, -1.0f));
+        openSplashLight.setColor(ColorRGBA.White);
+
+        rootNode.addLight(openSplashLight);*/
+        //cam.setParallelProjection(true);
     }
 
     public void cleanupOpenSplash() {
@@ -1589,7 +1617,7 @@ public class Main extends SimpleApplication {
                     fadeFilter.fadeIn();
                 }
                 
-                if(timer[T_EVENT_TIME] > 10) {  //If open splash is done
+                if(timer[T_EVENT_TIME] > 30) {  //If open splash is done
                     if(!stateFade) {  //If the screen isn't faded yet,
                         fadeFilter.fadeOut();   //fade it now,
                         stateFade = true;   //and tell the rest of the game
@@ -1603,8 +1631,9 @@ public class Main extends SimpleApplication {
                     }
                 } else {
                     //If it isn't done, then just update it normally.
-                    updateEndGame(tpf);
+                    
                 }
+                updateEndGame(tpf);
                 break;
         }
     }
@@ -5575,7 +5604,58 @@ public class Main extends SimpleApplication {
     //----------------------------------------------------------------------------------
     //----------------------------------------------------------------------------------
     public void updateEndGame(float tpf) {
+        cam.setLocation(Vector3f.ZERO.add(0,0,50));
+        cam.lookAt(Vector3f.ZERO.add(0,0,0), Vector3f.UNIT_Y);
+        
+        showDialogue = true;
+        updateGamePortraits(tpf);
+        say("Are we finished tonight?", 1);
+        
         //System.out.println("update end game");
+        if(stateFade) {
+            if(endgameTextColor.a - tpf > 0) {
+                endgameTextColor.a -= tpf;
+            } else {
+                endgameTextColor.a = 0;
+            }
+            
+            if(endgameImageColor.a - tpf > 0) {
+                endgameImageColor.a -= tpf;
+            } else {
+                endgameImageColor.a = 0;
+            }
+            
+            endgameText.setColor(endgameTextColor);
+            endgameImageMat.setColor("Color", endgameImageColor);
+        } else {
+            if(fadeFilter.getValue() > 0.95f) {
+                if(endgameTextColor.a + tpf < 0.6) {
+                    endgameTextColor.a += tpf;
+                } else {
+                    endgameTextColor.a = 0.6f;
+                }
+                
+                if(endgameImageColor.a + tpf < 1) {
+                    endgameImageColor.a += tpf/2;
+                } else {
+                    endgameImageColor.a = 1;
+                }
+                
+                endgameText.setColor(endgameTextColor);
+                endgameImageMat.setColor("Color", endgameImageColor);
+            }
+        }
+
+        endgameImageMat.setColor("Color", endgameImageColor);
+        
+        endgameImage.move(0,-tpf * 20,0);
+        /* SCROLL BACKGROUND
+        if(endBackground.getY() - tpf*20 > -64)
+            endBackground.move(0,-tpf * 20,0);
+        else
+            endBackground.setY(-64);
+         * 
+         */
     }
 
     //Input handling inner classes

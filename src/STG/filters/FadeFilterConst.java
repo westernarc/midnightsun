@@ -59,7 +59,11 @@ public class FadeFilterConst extends Filter {
         if (playing) {
             //value += tpf * direction / duration;
             value += 1/60f * direction / duration;
-            
+            /*
+            if(direction > 0) System.out.println("Fading in");
+            else if(direction < 0) System.out.println("Fading out");
+             * 
+             */
             if (value > 1) {
                 value = 1;
                 playing = false;

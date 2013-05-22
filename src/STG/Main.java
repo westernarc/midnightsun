@@ -184,7 +184,7 @@ public class Main extends SimpleApplication {
     boolean advanceEventTime;   //Event line paused
     boolean spellcardActive;    //Stores whether a spellcard is active
     boolean stageActive;        //Like spellcardActive, but only for stagen_0
-    boolean debug = true; //skips to game
+    boolean debug = false; //skips to game
     boolean mute = true; //mutes
     boolean gamePause = false;      //Stores whether game paused
     boolean gameOverFlag = false;   //Stores whether game over
@@ -522,7 +522,7 @@ public class Main extends SimpleApplication {
         filtPostProc = new FilterPostProcessor(assetManager);
 
         fadeFilter = new FadeFilterConst();
-        fadeFilter.setDuration(0.6f);
+        fadeFilter.setDuration(transitionTime);
         filtPostProc.addFilter(fadeFilter);
         /*
         DepthOfFieldFilter dofFilter = new DepthOfFieldFilter();
@@ -662,7 +662,7 @@ public class Main extends SimpleApplication {
         menuMark.setLocalTranslation(screenWidth/2, screenHeight / 2, 0);
         inputManager.setCursorVisible(false);
         
-        filtPostProc.removeFilter(radialBlur);
+        //filtPostProc.removeFilter(radialBlur);
         initMainMenuBindings();
     }
 
@@ -688,7 +688,7 @@ public class Main extends SimpleApplication {
         gameStartLoadingPanel.getMat().getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
 
         gameStartState.attachChild(gameStartLoadingPanel);
-        gameStartLoadingPanel.move(-2,0,0);
+        gameStartLoadingPanel.move(7,3,0);
         
         //Create and attach background panel
         gameStartBgPanel = new PanelNode("gamestartbg");
@@ -739,7 +739,7 @@ public class Main extends SimpleApplication {
         gameStartEmitter.setLowLife(0.5f);
         gameStartEmitter.setHighLife(0.9f);
         gameStartEmitter.setVelocityVariation(0.1f);
-        gameStartEmitter.move(-8.6f,-2.1f,0);
+        gameStartEmitter.move(-1.7f,0.8f,0);
         gameStartState.attachChild(gameStartEmitter);
         
     }
@@ -1705,6 +1705,7 @@ public class Main extends SimpleApplication {
             System.out.println("Advancing to state " + (currentGameState.next()));
             inputManager.deleteMapping("advance");
         }
+        
     }
 
     public void updateGame(float tpf) {

@@ -184,7 +184,7 @@ public class Main extends SimpleApplication {
     boolean advanceEventTime;   //Event line paused
     boolean spellcardActive;    //Stores whether a spellcard is active
     boolean stageActive;        //Like spellcardActive, but only for stagen_0
-    boolean debug = false; //skips to game
+    boolean debug = true; //skips to game
     boolean mute = true; //mutes
     boolean gamePause = false;      //Stores whether game paused
     boolean gameOverFlag = false;   //Stores whether game over
@@ -1615,6 +1615,12 @@ public class Main extends SimpleApplication {
                     stateFade = false;
                     fadeFilter.setDuration(5);
                     fadeFilter.fadeIn();
+                    
+                    endgameflags = new boolean[16];
+                    for(int i = 0; i < 16; i++) {
+                        endgameflags[i] = false;
+                    }
+                    endgametimer = 0;
                 }
                 
                 if(timer[T_EVENT_TIME] > 30) {  //If open splash is done
@@ -1628,6 +1634,7 @@ public class Main extends SimpleApplication {
                         timer[T_AFTER_STATE_TIME] = 0; //reset the after state timer.
                         timer[T_EVENT_TIME] = 0;
                         fadeFilter.setDuration(transitionTime);
+                        endgametimer = 0;
                     }
                 } else {
                     //If it isn't done, then just update it normally.
@@ -5604,14 +5611,47 @@ public class Main extends SimpleApplication {
     }
     //----------------------------------------------------------------------------------
     //----------------------------------------------------------------------------------
+    boolean[] endgameflags;
+    float[] endgametimes = {1f, 2f, 3f, 4f};
+    float endgametimer;
     public void updateEndGame(float tpf) {
         cam.setLocation(Vector3f.ZERO.add(0,0,50));
         cam.lookAt(Vector3f.ZERO.add(0,0,0), Vector3f.UNIT_Y);
-        
-        showDialogue = true;
+
         updateGamePortraits(tpf);
-        say("Are we finished tonight?", 1);
         
+        if(!dialogueActive) {
+            endgametimer += 1/55f;
+        }
+        
+        if(!endgameflags[0] && endgametimer > endgametimes[0]) {
+            showDialogue = true;
+            say("Are we finished tonight?", 1);
+            endgameflags[0] = true;
+        }
+        if(!endgameflags[1] && endgametimer > endgametimes[1]) {
+            say("Yes, looks like that's that.", 2);
+            endgameflags[1] = true;
+        }
+        if(!endgameflags[2] && endgametimer > endgametimes[2]) {
+            say("Great! Ahhh, I think I've started to sweat...", 1);
+            endgameflags[2] = true;
+        }
+        if(!endgameflags[3] && endgametimer > endgametimes[3]) {
+            showDialogue = false;
+            endgameflags[3] = true;
+        }
+        if(endgameflags[3]) {
+            if(endBackground.getY() - tpf*20 > -64)
+                endBackground.move(0,-tpf * (4 + endgametimer - endgametimes[3]),0);
+            else
+                endBackground.setY(-64);
+        } else {
+            if(endBackground.getY() - tpf*20 > -64)
+                endBackground.move(0,-tpf * 4,0);
+            else
+                endBackground.setY(-64);
+        }
         //System.out.println("update end game");
         if(stateFade) {
             if(endgameTextColor.a - tpf > 0) {
@@ -5629,7 +5669,7 @@ public class Main extends SimpleApplication {
             endgameText.setColor(endgameTextColor);
             endgameImageMat.setColor("Color", endgameImageColor);
         } else {
-            if(fadeFilter.getValue() > 0.95f) {
+            if(fadeFilter.getValue() > 0.95f && endgameflags[3]) {
                 if(endgameTextColor.a + tpf < 0.6) {
                     endgameTextColor.a += tpf;
                 } else {
@@ -5650,13 +5690,6 @@ public class Main extends SimpleApplication {
         endgameImageMat.setColor("Color", endgameImageColor);
         
         endgameImage.move(0,-tpf * 20,0);
-        /* SCROLL BACKGROUND
-        if(endBackground.getY() - tpf*20 > -64)
-            endBackground.move(0,-tpf * 20,0);
-        else
-            endBackground.setY(-64);
-         * 
-         */
     }
 
     //Input handling inner classes

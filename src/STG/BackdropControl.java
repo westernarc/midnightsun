@@ -61,6 +61,7 @@ public class BackdropControl implements Control {
     }
 
     public void update(float tpf) {
+        tpf = 1/60f;
         tpf *= timescale;
         if(enabled) {
             spatial.move(0 , -tpf * speed, 0);

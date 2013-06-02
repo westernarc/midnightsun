@@ -482,11 +482,7 @@ public class Main extends SimpleApplication {
     //---------------------------------------------------------
 
     //Game end
-    GuiImage endgameImage;
-    Box endgameImageModel;
-    Material endgameImageMat;
-    
-    BitmapText endgameText;
+    BitmapText[] endgameText;
     Rectangle endgameTextBounds;
     
     PanelNode endBackground;
@@ -1411,36 +1407,47 @@ public class Main extends SimpleApplication {
     }
 
     PanelNode endgamePanel;
-    ColorRGBA endgameTextColor;
-    ColorRGBA endgameImageColor;
+    ColorRGBA[] endgameTextColor;
     public void initEndGame() {
         System.out.println("Initializing State " + currentGameState);
         rootNode.detachAllChildren();
         //guiNode.detachAllChildren();
-        //guiNode.
-        endgameImageModel = new Box(1280, 5000, 0);
-        endgameImage = new GuiImage("screenFadeOverlay", screenFadeOverlayModel);
-        endgameImage.setWidth(1280);
-        endgameImage.setHeight(5000);
-        endgameImageMat = new Material(assetManager, "MatDefs/Unshaded.j3md");
-        endgameImageColor = new ColorRGBA(1,1,1,0);
-        endgameImageMat.setTexture("ColorMap", assetManager.loadTexture("Textures/endgame/background.png"));
-        endgameImageMat.setColor("Color", endgameImageColor);
-        endgameImageMat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
-        endgameImage.setMaterial(endgameImageMat);
-        endgameImage.move(screenWidth/2, screenHeight, -1);
-        //guiNode.attachChild(endgameImage);
         
-        endgameText = new BitmapText(guiFont,false);
-        endgameText.setSize(guiFont.getCharSet().getRenderedSize() * 0.5f);
+        //Set end game text
         endgameTextBounds = new Rectangle(0,0,screenWidth, screenHeight);
-        endgameText.setBox(endgameTextBounds);
-        endgameText.setAlignment(BitmapFont.Align.Center);
-        endgameTextColor = new ColorRGBA(1,1,1,0);
-        endgameText.setText("and so a long night concludes\nthe trial of guts has ended\n\ncongratulations! demo clear!");
-        endgameText.setLocalTranslation(0,screenHeight/2,0);
-        endgameText.setColor(endgameTextColor);
-        guiNode.attachChild(endgameText);
+        endgameText = new BitmapText[3];
+        endgameTextColor = new ColorRGBA[3];
+        
+        endgameTextColor[0] = new ColorRGBA(1,1,1,0);
+        endgameTextColor[1] = new ColorRGBA(1,1,1,0);
+        endgameTextColor[2] = new ColorRGBA(1,1,1,0);
+        
+        endgameText[0] = new BitmapText(guiFont,false);
+        endgameText[0].setSize(guiFont.getCharSet().getRenderedSize() * 0.5f);
+        endgameText[0].setBox(endgameTextBounds);
+        endgameText[0].setAlignment(BitmapFont.Align.Center);
+        endgameText[0].setText("and so a long night concludes");
+        endgameText[0].setLocalTranslation(0,screenHeight/2,0);
+        endgameText[0].setColor(endgameTextColor[0]);
+        guiNode.attachChild(endgameText[0]);
+        
+        endgameText[1] = new BitmapText(guiFont,false);
+        endgameText[1].setSize(guiFont.getCharSet().getRenderedSize() * 0.5f);
+        endgameText[1].setBox(endgameTextBounds);
+        endgameText[1].setAlignment(BitmapFont.Align.Center);
+        endgameText[1].setText("\nthe trial of guts has ended");
+        endgameText[1].setLocalTranslation(0,screenHeight/2,0);
+        endgameText[1].setColor(endgameTextColor[1]);
+        guiNode.attachChild(endgameText[1]);
+        
+        endgameText[2] = new BitmapText(guiFont,false);
+        endgameText[2].setSize(guiFont.getCharSet().getRenderedSize() * 0.5f);
+        endgameText[2].setBox(endgameTextBounds);
+        endgameText[2].setAlignment(BitmapFont.Align.Center);
+        endgameText[2].setText("\n\n\ncongratulations! demo clear!");
+        endgameText[2].setLocalTranslation(0,screenHeight/2,0);
+        endgameText[2].setColor(endgameTextColor[2]);
+        guiNode.attachChild(endgameText[2]);
         
         endBackground = new PanelNode("endBackgroundPanel");
         endBackground.setModel(assetManager.loadModel("Models/end/endpanel.j3o"));
@@ -1615,15 +1622,13 @@ public class Main extends SimpleApplication {
                     stateFade = false;
                     fadeFilter.setDuration(5);
                     fadeFilter.fadeIn();
-                    
                     endgameflags = new boolean[16];
                     for(int i = 0; i < 16; i++) {
                         endgameflags[i] = false;
                     }
                     endgametimer = 0;
                 }
-                
-                if(timer[T_EVENT_TIME] > 30) {  //If open splash is done
+                if(timer[T_EVENT_TIME] > 30 && endBackground.getY() < -56) {  //If open splash is done
                     if(!stateFade) {  //If the screen isn't faded yet,
                         fadeFilter.fadeOut();   //fade it now,
                         stateFade = true;   //and tell the rest of the game
@@ -1638,7 +1643,6 @@ public class Main extends SimpleApplication {
                     }
                 } else {
                     //If it isn't done, then just update it normally.
-                    
                 }
                 updateEndGame(tpf);
                 break;
@@ -1655,6 +1659,10 @@ public class Main extends SimpleApplication {
     //scrolling: 0: title, 1: start, 2: end
     public void updateMainMenu(float tpf) {
         timer[T_MAINMENU_TIME] += 1/60f;
+        System.out.println(cam.getRotation());
+        if(camFocalPoint != null) {
+            camFocalPoint.setPos(0,0,0);
+        }
         cam.setLocation(new Vector3f(0f,0f,15f));
         cam.setRotation(Quaternion.IDENTITY);
         cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Z);
@@ -1712,7 +1720,6 @@ public class Main extends SimpleApplication {
             System.out.println("Advancing to state " + (currentGameState.next()));
             inputManager.deleteMapping("advance");
         }
-        
     }
 
     public void updateGame(float tpf) {
@@ -2196,7 +2203,7 @@ public class Main extends SimpleApplication {
     boolean dialogueFlag[] = new boolean[dialogueCount];
 
     int varCount = 32;
-    int flagCount = 64;
+    int flagCount = 128;
     boolean spellFlag[] = new boolean[varCount];
     final int SFLAG_SCORE = 0;
     final int SFLAG_ZWAIT = 1;
@@ -2327,7 +2334,7 @@ public class Main extends SimpleApplication {
         playerAnimChan.setAnim("down");
         playerAnimChan.setSpeed(0.5f);
         
-        setUpEnemy(1);
+        setUpEnemy(3);
         
         objectNode.attachChild(player);
         playerModel.rotate(FastMath.HALF_PI,0,0);
@@ -2406,20 +2413,9 @@ public class Main extends SimpleApplication {
         }
         if(timer[T_EVENT_TIME] > 4 && !gameFlag[STAGE1_1]) {
             showDialogue = false;
-            stage1spell1(tpf);
+            stage3spell3(tpf);
             //stage2spell2(tpf);
             //stage2spell1(tpf);
-        }
-         
-        //Demo end block
-        if(timer[T_EVENT_TIME] > 5) {
-            //DEMO END
-            gameState.complete();
-            gameWin = true;
-            //currentGameState = STATE.MAINMENU;
-            //guiNode.detachAllChildren();
-            showDialogue = false;
-            timer[T_EVENT_TIME] = 5;
         }
         
         if(timer[T_EVENT_TIME] > 6 && !gameFlag[STAGE1_2]) {
@@ -2439,27 +2435,10 @@ public class Main extends SimpleApplication {
         }
         if(timer[T_EVENT_TIME] > 14 && gameFlag[STAGE1_6] && !gameFlag[STAGE1_L]) {
             stage1spellL(tpf);
-        }
-
-        if(timer[T_EVENT_TIME] > 18 && !dialogueFlag[5]) {
-            say("Finished",1);
-            dialogueFlag[5] = true;
-            showDialogue = true;
-        }
-        if(timer[T_EVENT_TIME] > 18.2 && !dialogueFlag[6]) {
-            say("Ok",2);
-            dialogueFlag[6] = true;
             gameFlag[STAGE1] = true;
         }
         
         if(timer[T_EVENT_TIME] > 20 && !gameFlag[STAGE2_0] && gameFlag[STAGE1]) {
-            //DEMO END
-            gameState.complete();
-            filtPostProc.removeFilter(radialBlur);
-            fadeFilter.fadeOut();
-            guiNode.detachAllChildren();
-            
-            showDialogue = false;
             stage2(tpf);
         }
 
@@ -2501,16 +2480,6 @@ public class Main extends SimpleApplication {
         }
         if(timer[T_EVENT_TIME] > 34 && gameFlag[STAGE2_6] && !gameFlag[STAGE2_L]) {
             stage2spellL(tpf);
-        }
-        if(timer[T_EVENT_TIME] > 36 && !dialogueFlag[10]) {
-            showDialogue = true;
-            say("I'm out",1);
-            dialogueFlag[10] = true;
-        }
-        if(timer[T_EVENT_TIME] > 36.2 && !dialogueFlag[11]) {
-            say("Yeah later",2);
-            dialogueFlag[11] = true;
-            gameFlag[STAGE2] = true;
         }
 
         if(timer[T_EVENT_TIME] > 38 && !gameFlag[STAGE3_0]) {
@@ -2557,16 +2526,6 @@ public class Main extends SimpleApplication {
         if(timer[T_EVENT_TIME] > 48 && !gameFlag[STAGE3_L]) {
             stage3spellL(tpf);
         }
-        if(timer[T_EVENT_TIME] > 49 && !dialogueFlag[15]) {
-            showDialogue = true;
-            say("Ahh..",2);
-            dialogueFlag[15] = true;
-        }
-        if(timer[T_EVENT_TIME] > 49.2 && !dialogueFlag[16]) {
-            say("Not bad right?",1);
-            dialogueFlag[16] = true;
-            gameFlag[STAGE3] = true;
-        }
 
         if(timer[T_EVENT_TIME] > 49 && !gameFlag[STAGE4_0]) {
             showDialogue = false;
@@ -2612,17 +2571,18 @@ public class Main extends SimpleApplication {
         if(timer[T_EVENT_TIME] > 61 && !gameFlag[STAGE4_L]) {
             stage4spellL(tpf);
         }
-        if(timer[T_EVENT_TIME] > 62 && !dialogueFlag[20]) {
-            showDialogue = true;
-            say("!!",2);
-            dialogueFlag[20] = true;
-        }
-        if(timer[T_EVENT_TIME] > 62.2 && !dialogueFlag[21]) {
+
+        //Demo end block
+        if(timer[T_EVENT_TIME] > 62.6) {
+            //DEMO END
+            gameState.complete();
+            gameWin = true;
             showDialogue = false;
-            say("Come back a century from now.",1);
-            dialogueFlag[21] = true;
-            gameFlag[STAGE4] = true;
+            timer[T_EVENT_TIME] = 62.6f;
+            filtPostProc.removeFilter(radialBlur);
+            fadeFilter.fadeOut();
         }
+        
         if(timer[T_EVENT_TIME] > 63 && !gameFlag[STAGE5_0]) {
             stage5(tpf);
         }
@@ -3034,6 +2994,10 @@ public class Main extends SimpleApplication {
     Vector3f s1s2movevec;
     private void stage1spell2(float tpf) {
         openSpell(1,2,10,250, tpf);
+        if(!spellFlag[3]) {
+            colorSwitch = BULLET.TALISMAN_W;
+            spellFlag[3] = true;
+        }
         if(!(spellTimer[T_SPELL_MAIN] > 60 || enemy.life < 150)) {
             //Move around a bit.
             if(spellTimer[1] > 0 && !moved) {
@@ -3044,26 +3008,24 @@ public class Main extends SimpleApplication {
             spellcardActive = true;
             updateSpellTimer(tpf, 2);
             if(spellTimer[1] > 2 && !spellcard2_1) {
-                fireSpeedCircle(enemy.getLocalTranslation(), 64, 8, 0, 18f, 2, 8, 1f, colorSwitch);
-                    if(colorSwitch == BULLET.TALISMAN_R) {
-                        colorSwitch = BULLET.TALISMAN_W;
-                    } else if(colorSwitch == BULLET.TALISMAN_W) {
+                fireSpeedCircle(enemy.getLocalTranslation(), 32, 6, 0, 18f, 2, 8, 1f, colorSwitch);
+                    if(colorSwitch != BULLET.TALISMAN_R) {
                         colorSwitch = BULLET.TALISMAN_R;
                     } else {
-                        colorSwitch = BULLET.TALISMAN_R;
+                        colorSwitch = BULLET.TALISMAN_W;
                     }
                 spellcard2_1 = true;
             }
 
             if(spellTimer[1] > 3 && !spellcard2_2) {
-                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.00f, 14.0f, 2, 8, 1f, colorSwitch);
-                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.02f, 14.5f, 2, 8, 1f, colorSwitch);
-                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.04f, 15f, 2, 8, 1f, colorSwitch);
-                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.06f, 15.5f, 2, 8, 1f, colorSwitch);
-                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.08f, 16.0f, 2, 8, 1f, colorSwitch);
-                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.10f, 16.5f, 2, 8, 1f, colorSwitch);
-                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.12f, 17.0f, 2, 8, 1f, colorSwitch);
-                fireSpeedCircle(enemy.getLocalTranslation(), 48, 1, 0.14f, 17.5f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 24, 1, 0.00f, 14.0f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 24, 1, 0.02f, 14.5f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 24, 1, 0.04f, 15f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 24, 1, 0.06f, 15.5f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 24, 1, 0.08f, 16.0f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 24, 1, 0.10f, 16.5f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 24, 1, 0.12f, 17.0f, 2, 8, 1f, colorSwitch);
+                fireSpeedCircle(enemy.getLocalTranslation(), 24, 1, 0.14f, 17.5f, 2, 8, 1f, colorSwitch);
                 spellcard2_2 = true;
             }
             if(spellTimer[1] > 5 && !spellcard2_3) {
@@ -3169,7 +3131,7 @@ public class Main extends SimpleApplication {
                 bulletNode.attachChild(spell4familiar2);
                 spellFlag[9] = true;
             }
-
+            enemy.moveTo(0,0,0, 60 * tpf);
             spell4familiar1.setX(FastMath.cos(spellTimer[0]*3)*15);
             spell4familiar1.setY(FastMath.sin(spellTimer[0]*3)*15);
             spell4familiar2.setLocalTranslation(new Vector3f(FastMath.cos(-(spellTimer[0] + 3.14f)*3) * 15, FastMath.sin(-(spellTimer[0] + 3.14f)*3) * 15, 0).add(enemy.getPos()));
@@ -3222,7 +3184,7 @@ public class Main extends SimpleApplication {
                 spellFlag[3] = true;
             }
             if(spellTimer[1] > 0.3) {
-                fireSpeedCircle(enemy.getLocalTranslation(), 36, 1, spellTimer[0] * tpf * 20+FastMath.rand.nextFloat(), 20, 4f, 4, 1, BULLET.TALISMAN_R);
+                fireSpeedCircle(enemy.getLocalTranslation(), 24, 1, spellTimer[0] * tpf * 20+FastMath.rand.nextFloat(), 20, 4f, 4, 1, BULLET.TALISMAN_R);
                 //fireSpeedCircle(enemy.getPos(), 16, 1, spellTimer[0], 30, 1f, 20, 1, TALISMAN_R);
                 spellTimer[1] = 0;
             }
@@ -3656,6 +3618,7 @@ public class Main extends SimpleApplication {
                 gameFlag[spell] = true;
                 spellCircleCreated = false;
                 System.out.println("Closing spell");
+                graze = 0;
             }
         }
     }
@@ -4275,8 +4238,8 @@ public class Main extends SimpleApplication {
         closeSpell(STAGE3_2,60,150,tpf);
     }
     float s3s3loopTime;
-    ParticleEmitter s3s3dashEmitter;
     Vector3f s3s3tracker;
+    float sakuyaAlpha;
     private void stage3spell3(float tpf){
         openSpell(3,3,5,250,tpf);
         //0: MAIN
@@ -4286,59 +4249,44 @@ public class Main extends SimpleApplication {
         //4: Throw small timer
         //Init variables
         if(!spellFlag[1]) {
-            s3s3loopTime = 3;
-            s3s3dashEmitter = new ParticleEmitter("s3s3dashEmitter",ParticleMesh.Type.Triangle,300);
-            Material dashMat = new Material(assetManager,"MatDefs/Particle.j3md");
-            dashMat.setTexture("m_Texture", assetManager.loadTexture("Textures/game/shockwave.png"));
-            s3s3dashEmitter.setMaterial(dashMat);
-            s3s3dashEmitter.setQueueBucket(Bucket.Translucent);
-            s3s3dashEmitter.setImagesX(1);
-            s3s3dashEmitter.setImagesY(1);
-            s3s3dashEmitter.setLowLife(0.01f);
-            s3s3dashEmitter.setHighLife(0.05f);
-            s3s3dashEmitter.setStartSize(0.1f);
-            s3s3dashEmitter.setEndSize(5f);
-            s3s3dashEmitter.setEndColor(new ColorRGBA(0.4f, 0.4f, 0.4f, 0.1f));   // red
-            s3s3dashEmitter.setStartColor(new ColorRGBA(0f, 0f, 1f, 0.2f)); // yellow
-            s3s3dashEmitter.setParticlesPerSec(0);
-            enemy.attachChild(s3s3dashEmitter);
-            
+            s3s3loopTime = 1;            
             s3s3tracker = new Vector3f();
             spellFlag[1] = true;
+            
+            sakuyaAlpha = 0;
         }
+        
         if(spellTimer[1] < s3s3loopTime) {
             if(!spellFlag[2]) {
                 fireStraightCircle(enemy.getPos(), 3,1, spellTimer[T_SPELL_MAIN], 15, 2, BULLET.KNIFE_W);
                 spellFlag[2] = true;
             }
-            if(spellTimer[2] > s3s3loopTime/2) {
+            if(spellTimer[2] > s3s3loopTime*3f/4f) {
                 //Create a weighted average position so that the enemy
                 //dashes 80% of the distance to the player.
                 //Player's location is weighted
-                s3s3dashEmitter.setParticlesPerSec(40);
+                
                 
                 float meanX = (player.getX()*4 + enemy.getX())/5;
                 float meanY = (player.getY()*4 + enemy.getY())/5;
                 enemy.moveTo(meanX, meanY, 0, 20);
                 enemyAnimChan.setAnim("slash");
-                enemyAnimChan.setSpeed(0.2f*spellTimer[0]*0.2f);
+                //enemyAnimChan.setSpeed(0.2f*spellTimer[0]*0.2f);
                 enemyAnimChan.setLoopMode(LoopMode.DontLoop);
                 s3s3tracker.set(player.getPos());
-                s3s3dashEmitter.setInitialVelocity(new Vector3f(1,0,0));
-                s3s3dashEmitter.setFacingVelocity(true);
+                enemy.lookAt(s3s3tracker, Vector3f.UNIT_Z);
                 spellTimer[2] = -20;
             }
             if(spellTimer[3] > s3s3loopTime*3/4) {
-                s3s3dashEmitter.setParticlesPerSec(0);
                 //Fire a flurry
                 for(int i = 0; i < 16/s3s3loopTime; i++) {
-                    fireStraightLine(enemy.getPos(), s3s3tracker,1,i*0.05f, 20 / s3s3loopTime, 1, BULLET.KNIFE_B);
-                    fireStraightLine(enemy.getPos(), s3s3tracker,1,i*0.05f, 20 / s3s3loopTime, 1, BULLET.KNIFE_B);
+                    //fireStraightLine(enemy.getPos(), s3s3tracker,1,i*0.05f, 20 / s3s3loopTime, 1, BULLET.KNIFE_B);
+                    fireSpeedLine(enemy.getPos(), s3s3tracker,1,i*0.05f, 0,1, 20 / s3s3loopTime, 1, BULLET.KNIFE_B);
                 }
                 spellTimer[3] = -20;
             }
         } else {
-            if(s3s3loopTime > 0.5) {
+            if(s3s3loopTime > 0.4) {
                 s3s3loopTime -= 0.2;
             }
             //Reset every loop
@@ -4349,11 +4297,6 @@ public class Main extends SimpleApplication {
         }
         
         closeSpell(STAGE3_3,60,150,tpf);
-        //Remove emitter
-        if(gameFlag[STAGE3_3]) {
-            s3s3dashEmitter.removeFromParent();
-            s3s3dashEmitter = null;
-        }
     }
     
     Vector3f s3s4tracker;
@@ -5297,6 +5240,7 @@ public class Main extends SimpleApplication {
         switch(type) {
             case TALISMAN_R: return talismanR.clone();
             case TALISMAN_B: return talismanW.clone();
+            case TALISMAN_W: return talismanW.clone();
             case BALLSHOT_W: return ballShotW.clone();
             case BALLSHOT_R: return ballShotR.clone();
             case BALLSHOT_B: return ballShotB.clone();
@@ -5612,7 +5556,7 @@ public class Main extends SimpleApplication {
     //----------------------------------------------------------------------------------
     //----------------------------------------------------------------------------------
     boolean[] endgameflags;
-    float[] endgametimes = {1f, 2f, 3f, 4f};
+    float[] endgametimes = {1f, 1.3f, 1.6f, 1.9f,3.3f,7.3f,11.3f, 18.3f, 10};
     float endgametimer;
     public void updateEndGame(float tpf) {
         cam.setLocation(Vector3f.ZERO.add(0,0,50));
@@ -5642,54 +5586,42 @@ public class Main extends SimpleApplication {
             endgameflags[3] = true;
         }
         if(endgameflags[3]) {
-            if(endBackground.getY() - tpf*20 > -64)
-                endBackground.move(0,-tpf * (4 + endgametimer - endgametimes[3]),0);
-            else
-                endBackground.setY(-64);
-        } else {
-            if(endBackground.getY() - tpf*20 > -64)
+            if(endBackground.getY() - tpf * 20 > -64)
                 endBackground.move(0,-tpf * 4,0);
             else
                 endBackground.setY(-64);
         }
-        //System.out.println("update end game");
+
         if(stateFade) {
-            if(endgameTextColor.a - tpf > 0) {
-                endgameTextColor.a -= tpf;
-            } else {
-                endgameTextColor.a = 0;
+            for(int i = 0; i < 3; i++) {
+                if(endgameTextColor[i].a - tpf > 0) {
+                    endgameTextColor[i].a -= tpf;
+                } else {
+                    endgameTextColor[i].a = 0;
+                }
+                endgameText[i].setColor(endgameTextColor[i]);
             }
-            
-            if(endgameImageColor.a - tpf > 0) {
-                endgameImageColor.a -= tpf;
-            } else {
-                endgameImageColor.a = 0;
-            }
-            
-            endgameText.setColor(endgameTextColor);
-            endgameImageMat.setColor("Color", endgameImageColor);
         } else {
-            if(fadeFilter.getValue() > 0.95f && endgameflags[3]) {
-                if(endgameTextColor.a + tpf < 0.6) {
-                    endgameTextColor.a += tpf;
-                } else {
-                    endgameTextColor.a = 0.6f;
+            if(fadeFilter.getValue() > 0.95f) {
+                for(int i = 0; i < 3; i++) {
+                    if(endgametimer > endgametimes[i + 4] && endgametimer < endgametimes[i + 5]) {
+                        if(endgameTextColor[i].a + tpf < 0.6) {
+                            endgameTextColor[i].a += tpf;
+                        } else {
+                            endgameTextColor[i].a = 0.6f;
+                        }
+                        endgameText[i].setColor(endgameTextColor[i]);
+                    } else {
+                        if(endgameTextColor[i].a - tpf > 0) {
+                            endgameTextColor[i].a -= tpf;
+                        } else {
+                            endgameTextColor[i].a = 0;
+                        }
+                        endgameText[i].setColor(endgameTextColor[i]);
+                    }
                 }
-                
-                if(endgameImageColor.a + tpf < 1) {
-                    endgameImageColor.a += tpf/2;
-                } else {
-                    endgameImageColor.a = 1;
-                }
-                
-                endgameText.setColor(endgameTextColor);
-                endgameImageMat.setColor("Color", endgameImageColor);
             }
         }
-
-        endgameImageMat.setColor("Color", endgameImageColor);
-        
-        endgameImage.move(0,-tpf * 20,0);
     }
 
     //Input handling inner classes
